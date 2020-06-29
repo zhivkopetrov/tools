@@ -1,8 +1,7 @@
 // Corresponding header
 #include "ResourceParser.h"
 
-#include <dirent.h>
-#include <sys/stat.h>
+// C system headers
 
 // C++ system headers
 #include <cctype>
@@ -15,69 +14,58 @@
 
 // Own components headers
 #include "resource_utils/defines/ResourceDefines.h"
-#include "utils/datatype/StringUtils.h"
+#include "utils/data_type/StringUtils.h"
+#include "utils/file_system/FileSystemUtils.h"
 #include "utils/Log.h"
 
 static std::hash<std::string> hashFunction;
 
-#define EXTERNAL_PATH_PREFIX "external - "
-#define EXTERNAL_PATH_PREFIX_SIZE 11
 
-#define MB_PRECISION_AFTER_DECIMAL 3
 
-ResourceParser::ResourceParser() :
-      _RESOURCES_BIN_NAME("resources.bin"),
-      _FONTS_BIN_NAME("fonts.bin"),
-      _SOUNDS_BIN_NAME("sounds.bin"),
-      _projectAbsFilePath("Not set") {
+namespace {
+constexpr auto RESOURCES_BIN_NAME = "resources.bin";
+constexpr auto FONTS_BIN_NAME = "fonts.bin";
+constexpr auto SOUNDS_BIN_NAME = "sounds.bin";
+
+constexpr auto EXTERNAL_PATH_PREFIX = "external - ";
+constexpr auto EXTERNAL_PATH_PREFIX_SIZE = 11;
+constexpr auto MB_PRECISION_AFTER_DECIMAL = 3;
+}
+
+ResourceParser::ResourceParser() : _projectAbsFilePath("Not set") {
   resetInternals();
 }
 
-int32_t ResourceParser::init(const std::string & projectFolderName) {
-  _projectFolder = projectFolderName + "/";
+int32_t ResourceParser::init(const std::string & projectPath) {
+  _projectAbsFilePath = projectPath.empty() ?
+      FileSystemUtils::getRootDirectory() : projectPath;
 
-  const std::string ABSOLUTE_FILE_PATH = __FILE__;
-
-  // use rfind, because we are closer to the end
-  const uint64_t CURR_DIR_POS = ABSOLUTE_FILE_PATH.rfind(_projectFolder);
-
-  if (std::string::npos != CURR_DIR_POS) {
-    _projectAbsFilePath =
-        ABSOLUTE_FILE_PATH.substr(0, CURR_DIR_POS + _projectFolder.size());
-
-    _fileParser.setAbsoluteProjectPath(_projectAbsFilePath);
-
-    // Reserve enough memory for the whole parse process, no no unneeded
-    // internal vector grow is invoked
-    _fileData.reserve(100);
-  } else {
-    LOGERR("Error, project folder could not be found -> Terminating...");
-
-    return EXIT_FAILURE;
-  }
+  // Reserve enough memory for the whole parse process, no no unneeded
+  // internal vector grow is invoked
+  _fileData.reserve(200);
 
   return EXIT_SUCCESS;
 }
 
-int32_t ResourceParser::parseResourceTree(const std::string& projectName) {
+int32_t ResourceParser::parseResourceTree() {
   int32_t err = EXIT_SUCCESS;
-
   _startDir = _projectAbsFilePath;
-  _startDir.append(projectName);
+  _projectFolder =
+      FileSystemUtils::getCurrentFolderFromDirectory(_projectAbsFilePath);
 
-  LOG_ON_SAME_LINE("================================== start ");
-  LOGC_ON_SAME_LINE("%s ", projectName.c_str());
   LOG("======================================");
   LOG("Starting recursive search on %s", _startDir.c_str());
 
-  if (EXIT_SUCCESS != setupResourceTree(projectName)) {
+  if (EXIT_SUCCESS != setupResourceTree()) {
     LOGERR("Error, setupResourceTree() failed");
 
     err = EXIT_FAILURE;
   }
   if (EXIT_SUCCESS == err) {
-    // err is passed by reference since it is recursion
-    parseDirectory(_startDir, err);
+    if (EXIT_SUCCESS != processAllFiles()) {
+      LOGERR("processAllFiles() failed");
+      err = EXIT_FAILURE;
+    }
   }
 
   if (EXIT_SUCCESS == err) {
@@ -86,7 +74,7 @@ int32_t ResourceParser::parseResourceTree(const std::string& projectName) {
         _musicsCounter, _chunksCounter, _staticResFileTotalSize,
         _fontFileTotalSize, _soundFileTotalSize);
 
-    const int32_t CONTAINERS_SIZE = 4;
+    constexpr int32_t CONTAINERS_SIZE = 4;
 
     const int32_t ITEMS_SIZE[CONTAINERS_SIZE]{
         _staticResFileTotalSize, _dynamicResFileTotalSize, _fontFileTotalSize,
@@ -97,7 +85,7 @@ int32_t ResourceParser::parseResourceTree(const std::string& projectName) {
     for (int32_t i = 0; i < CONTAINERS_SIZE; ++i) {
       itemsSizeStr[i] =
           std::to_string(static_cast<double>(ITEMS_SIZE[i]) / 1024);
-      size_t DOT_POS = itemsSizeStr[i].find('.');
+      const size_t DOT_POS = itemsSizeStr[i].find('.');
 
       itemsSizeStr[i] =
           (itemsSizeStr[i].substr(0, DOT_POS + 1 + MB_PRECISION_AFTER_DECIMAL));
@@ -110,31 +98,29 @@ int32_t ResourceParser::parseResourceTree(const std::string& projectName) {
     LOG_ON_SAME_LINE(
         "%s generation ... (%lu static files with size: %s "
         "and %lu dynamic files with size: %s) ",
-        _RESOURCES_BIN_NAME.c_str(), _staticWidgetsCounter,
+        RESOURCES_BIN_NAME, _staticWidgetsCounter,
         itemsSizeStr[0].c_str(), _dynamicWidgetsCounter,
         itemsSizeStr[1].c_str());
     LOGG("[Done]");
     LOG_ON_SAME_LINE("%s generation ... (%lu static files with size: %s) ",
-                     _FONTS_BIN_NAME.c_str(), _fontsCounter,
+                     FONTS_BIN_NAME, _fontsCounter,
                      itemsSizeStr[2].c_str());
     LOGG("[Done]");
     LOG_ON_SAME_LINE("%s generation ... (%lu static files with size: %s) ",
-                     _SOUNDS_BIN_NAME.c_str(),
+                     SOUNDS_BIN_NAME,
                      (_musicsCounter + _chunksCounter),
                      itemsSizeStr[3].c_str());
     LOGG("[Done]");
   } else {
     LOG_ON_SAME_LINE("\nRecursive search on %s ... ", _startDir.c_str());
     LOGR("[Failed]");
-    LOG_ON_SAME_LINE("%s generation ... ", _RESOURCES_BIN_NAME.c_str());
+    LOG_ON_SAME_LINE("%s generation ... ", RESOURCES_BIN_NAME);
     LOGR("[Failed]");
-    LOG_ON_SAME_LINE("%s generation ... ", _FONTS_BIN_NAME.c_str());
+    LOG_ON_SAME_LINE("%s generation ... ", FONTS_BIN_NAME);
     LOGR("[Failed]");
-    LOG_ON_SAME_LINE("%s generation ... ", _SOUNDS_BIN_NAME.c_str());
+    LOG_ON_SAME_LINE("%s generation ... ", SOUNDS_BIN_NAME);
     LOGR("[Failed]");
   }
-  LOG_ON_SAME_LINE("=================================== end ");
-  LOGC_ON_SAME_LINE("%s ", projectName.c_str());
   LOG("=======================================");
 
   // reset internal variables on both success and failure
@@ -143,38 +129,29 @@ int32_t ResourceParser::parseResourceTree(const std::string& projectName) {
   return err;
 }
 
-int32_t ResourceParser::setupResourceTree(const std::string& projectName) {
+int32_t ResourceParser::setupResourceTree() {
   // files above are located in the build directory
   std::string projectAbsBuildFilePath = _projectAbsFilePath;
   projectAbsBuildFilePath.append("build/");
 
   std::string resourcesFolder = projectAbsBuildFilePath;
-  resourcesFolder.append(projectName).append("/").append("resources");
+  resourcesFolder.append(_projectFolder).append("/").append("resources");
 
-  struct stat fileStat;
-
-  // check if directory valid
-  if (-1 == stat(resourcesFolder.c_str(), &fileStat)) {
-    if (!S_ISDIR(fileStat.st_mode)) {
-      // create folder with read/write/search permissions for owner and
-      // group, with read/search permissions for others
-      if (-1 == mkdir(resourcesFolder.c_str(),
-                      S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH)) {
-        LOGERR("Error, ::mkdir() failed, Reason: %s", strerror(errno));
-
-        return EXIT_FAILURE;
-      }
+  if (!FileSystemUtils::isDirectoryPresent(resourcesFolder)) {
+    if (EXIT_SUCCESS != FileSystemUtils::createDirectory(resourcesFolder)) {
+      LOGERR("createDirectory() failed for '%s'", resourcesFolder.c_str());
+      return EXIT_FAILURE;
     }
   }
 
   std::string resFile = resourcesFolder;
-  resFile.append("/").append(_RESOURCES_BIN_NAME);
+  resFile.append("/").append(RESOURCES_BIN_NAME);
 
   std::string fontFile = resourcesFolder;
-  fontFile.append("/").append(_FONTS_BIN_NAME);
+  fontFile.append("/").append(FONTS_BIN_NAME);
 
   std::string soundFile = resourcesFolder;
-  soundFile.append("/").append(_SOUNDS_BIN_NAME);
+  soundFile.append("/").append(SOUNDS_BIN_NAME);
 
   _fileBuilder.setCombinedDestFileNames(resFile, fontFile, soundFile);
 
@@ -187,80 +164,35 @@ int32_t ResourceParser::setupResourceTree(const std::string& projectName) {
   return EXIT_SUCCESS;
 }
 
-void ResourceParser::parseDirectory(const std::string& dir, int32_t& errCode) {
-  DIR* currentDir = nullptr;
+int32_t ResourceParser::processAllFiles() {
+  const std::vector<std::string> blackListFolders { "build" };
+  std::vector<std::string> files;
 
-  currentDir = opendir(dir.c_str());
-  if (nullptr == currentDir) {
-    LOGERR("Error in opendir(%s), reason: %s", dir.c_str(), strerror(errno));
-
-    errCode = EXIT_FAILURE;
+  const int32_t res = FileSystemUtils::getAllFilesInDirectoryRecursively(
+      _startDir, blackListFolders, files);
+  if (EXIT_FAILURE == res) {
+    LOGERR("getAllFilesInDirectoryRecursively() failed");
+    return EXIT_FAILURE;
   }
 
-  if (EXIT_SUCCESS == errCode) {
-    struct dirent* dirP = nullptr;
-    struct stat fileStat;
-    std::string filePath = "";
+  for (const auto& fileName : files) {
+    // Skip file if it's not resource file
+    if (!isResourceFile(fileName)) {
+      continue;
+    }
+    _currFileName = fileName;
 
-    while (nullptr != (dirP = readdir(currentDir))) {
-      // Skip current object if it is this directory or parent directory
-      if (!strncmp(dirP->d_name, ".", 1) || !strncmp(dirP->d_name, "..", 2)) {
-        continue;
-      }
-
-      // Constructing absolute file path
-      filePath = dir;
-      if (dir[dir.size() - 1] != '/') {
-        filePath.append("/");
-      }
-      filePath.append(dirP->d_name);
-
-      // Skip current file / directory if it is invalid in some way
-      if (-1 == stat(filePath.c_str(), &fileStat)) {
-        continue;
-      }
-
-      // Recursively call this function if current object is a directory
-      if (S_ISDIR(fileStat.st_mode)) {
-        const std::string folderName(dirP->d_name);
-        parseDirectory(filePath, errCode);
-        continue;
-      }
-
-      // Here we are located on the leaf folder nodes (leaf files)
-      _currDirPath = dir;
-      if (dir[dir.size() - 1] != '/') {
-        _currDirPath.append("/");
-      }
-
-      _currFileName = dirP->d_name;
-      _currAbsFilePath = filePath;
-
-      // Skip file if it's not resource file
-      if (!isResourceFile(_currFileName)) {
-        continue;
-      }
-
-      errCode |= buildResourceFile();
-
-      if (EXIT_SUCCESS != errCode) {
-        LOGERR("Error in buildResourceFile() for %s.", _currFileName.c_str());
-
-        LOGR("Cancelling parsing for next files");
-
-        break;
-      }
+    if (EXIT_SUCCESS != buildResourceFile()) {
+      LOGERR("Error in buildResourceFile() for %s.", _currFileName.c_str());
+      LOGR("Cancelling parsing for next files");
+      return EXIT_FAILURE;
     }
   }
 
-  if (EXIT_SUCCESS != closedir(currentDir)) {
-    LOGERR("Error in closefir(), reason: %s", strerror(errno));
-
-    errCode = EXIT_FAILURE;
-  }
+  return EXIT_SUCCESS;
 }
 
-bool ResourceParser::isResourceFile(const std::string& fileName) {
+bool ResourceParser::isResourceFile(const std::string& fileName) const {
   bool result = false;
 
   // check wheter file has .rsrc extension
@@ -370,76 +302,65 @@ int32_t ResourceParser::buildResFileInternalData() {
   if (std::string::npos == dotPos) {
     LOGERR("Internal error. Resource file from %s could not be created",
            _currFileName.c_str());
-
-    err = EXIT_FAILURE;
-  } else  // dot is found
-  {
-    fileName = _currFileName.substr(0, dotPos);
+    return EXIT_FAILURE;
   }
 
-  if (EXIT_SUCCESS == err) {
-    prjPathStartIdx = _currAbsFilePath.find(_projectFolder);
+  fileName = _currFileName.substr(0, dotPos);
 
-    if (prjPathStartIdx == std::string::npos) {
-      LOGERR("Internal error. Resource file from %s could not be created",
-             _currFileName.c_str());
+  prjPathStartIdx = _currAbsFilePath.find(_projectFolder);
+  if (prjPathStartIdx == std::string::npos) {
+    LOGERR("Internal error. Resource file from %s could not be created",
+           _currFileName.c_str());
+    return EXIT_FAILURE;
+  }
 
-      err = EXIT_FAILURE;
-    } else {
-      prjPathStartIdx += _projectFolder.size();
+  prjPathStartIdx += _projectFolder.size();
+
+  prjPathEndIdx = _currAbsFilePath.find(fileName);
+
+  if (std::string::npos == prjPathEndIdx) {
+    LOGERR("Internal error. Resource file from %s could not be created",
+           _currFileName.c_str());
+    return EXIT_FAILURE;
+  }
+
+  // get project path
+  const std::string PROJECT_PATH =
+      _currAbsFilePath.substr(prjPathStartIdx,  // start index
+                              prjPathEndIdx - prjPathStartIdx);  // size
+
+  // remember relative folder path before we append *game*_resources_h_
+  _fileParser.setRelativeFolderPath(PROJECT_PATH);
+
+  _currHeaderGuard = PROJECT_PATH;
+  _currHeaderGuard.append(fileName);
+  _currHeaderGuard.append("RESOURCES_H_");
+
+  const uint64_t headerGuardSize = _currHeaderGuard.size();
+  for (uint64_t i = 0; i < headerGuardSize; ++i) {
+    if (isalpha(_currHeaderGuard[i])) {
+      _currHeaderGuard[i] =
+          static_cast<char>(std::toupper(_currHeaderGuard[i]));
+    } else if (_currHeaderGuard[i] == '/') {
+      _currHeaderGuard[i] = '_';
     }
   }
 
-  if (EXIT_SUCCESS == err) {
-    prjPathEndIdx = _currAbsFilePath.find(fileName);
+  _currDestFile = _currDirPath.append(fileName);
+  _currDestFile.append("Resources");
 
-    if (std::string::npos == prjPathEndIdx) {
-      LOGERR("Internal error. Resource file from %s could not be created",
-             _currFileName.c_str());
+  _currNamespace = fileName;
+  _currNamespace.append("Resources");
 
-      err = EXIT_FAILURE;
-    } else {
-      // get project path
-      const std::string PROJECT_PATH =
-          _currAbsFilePath.substr(prjPathStartIdx,  // start index
-                                  prjPathEndIdx - prjPathStartIdx);  // size
-
-      // remember relative folder path before we append *game*_resources_h_
-      _fileParser.setRelativeFolderPath(PROJECT_PATH);
-
-      _currHeaderGuard = PROJECT_PATH;
-      _currHeaderGuard.append(fileName);
-      _currHeaderGuard.append("RESOURCES_H_");
-
-      const uint64_t headerGuardSize = _currHeaderGuard.size();
-      for (uint64_t i = 0; i < headerGuardSize; ++i) {
-        if (isalpha(_currHeaderGuard[i])) {
-          _currHeaderGuard[i] =
-              static_cast<char>(std::toupper(_currHeaderGuard[i]));
-        } else if (_currHeaderGuard[i] == '/') {
-          _currHeaderGuard[i] = '_';
-        }
-      }
-    }
-  }
-
-  if (EXIT_SUCCESS == err) {
-    _currDestFile = _currDirPath.append(fileName);
-    _currDestFile.append("Resources");
-
-    _currNamespace = fileName;
-    _currNamespace.append("Resources");
-
-    _fileBuilder.setNamespace(_currNamespace);
-    _fileBuilder.setDestFileName(_currDestFile);
-    _fileBuilder.setHeaderGuards(_currHeaderGuard);
-  }
+  _fileBuilder.setNamespace(_currNamespace);
+  _fileBuilder.setDestFileName(_currDestFile);
+  _fileBuilder.setHeaderGuards(_currHeaderGuard);
 
   return err;
 }
 
 int32_t ResourceParser::parseFileData() {
-  int32_t err = EXIT_SUCCESS;
+  _syntaxChecker.reset();
 
   std::string lineData = "";
   std::string rowData = "";
@@ -454,70 +375,54 @@ int32_t ResourceParser::parseFileData() {
   while (std::getline(_sourceStream, lineData)) {
     ++parsedRowNumber;
 
-    if (lineData.size() == 0)  // it is empty line -> skip it
-    {
+    if (lineData.size() == 0) { // it is empty line -> skip it
       continue;
-    } else if (lineData[0] == '#')  // it is comment line -> skip it
-    {
+    } else if (lineData[0] == '#') { // it is comment line -> skip it
       continue;
     } else if (_syntaxChecker.hasValidTag(lineData)) {
-      err = _syntaxChecker.extractRowData(lineData, &rowData, &eventCode);
-
-      if (EXIT_SUCCESS != err) {
+      if (EXIT_SUCCESS !=
+          _syntaxChecker.extractRowData(lineData, &rowData, &eventCode)) {
         LOGERR("Error in extractRowData()");
-
-        break;
+        return EXIT_FAILURE;
       }
 
       if (EXIT_SUCCESS != setSingleRowData(rowData, eventCode, &combinedData)) {
-        err = EXIT_FAILURE;
-
         LOGERR("Error in setSingleRowData()");
-
-        break;
+        return EXIT_FAILURE;
       }
     } else {
       LOGERR(
-          "Internal error occurred on line: %d. Canceling parsing for "
-          "%s",
+          "Internal error occurred on line: %d. Canceling parsing for %s",
           parsedRowNumber, _currFileName.c_str());
-
-      err = EXIT_FAILURE;
-      break;
+      return EXIT_FAILURE;
     }
 
-    if (EXIT_SUCCESS == err) {
-      _syntaxChecker.updateOrder();
+    _syntaxChecker.updateOrder();
 
-      if (_syntaxChecker.isChunkReady()) {
-        // accumulate only TextureLoadType::ON_INIT widgets!
-        if (_fileParser.isGraphicalFile() &&
-            (ResourceDefines::TextureLoadType::ON_INIT ==
-             combinedData.textureLoadType)) {
-          ++_staticWidgetsCounter;
-          _staticResFileTotalSize += combinedData.header.fileSize;
-        } else {
-          ++_dynamicWidgetsCounter;
-          _dynamicResFileTotalSize += combinedData.header.fileSize;
-        }
-
-        _fileData.emplace_back(combinedData);
-        combinedData.reset();
-        _fileParser.closeFileAndReset();
+    if (_syntaxChecker.isChunkReady()) {
+      // accumulate only TextureLoadType::ON_INIT widgets!
+      if (_fileParser.isGraphicalFile() &&
+          (ResourceDefines::TextureLoadType::ON_INIT ==
+           combinedData.textureLoadType)) {
+        ++_staticWidgetsCounter;
+        _staticResFileTotalSize += combinedData.header.fileSize;
+      } else {
+        ++_dynamicWidgetsCounter;
+        _dynamicResFileTotalSize += combinedData.header.fileSize;
       }
+
+      _fileData.emplace_back(combinedData);
+      combinedData.reset();
+      _fileParser.closeFileAndReset();
     }
   }
 
   if (_fileData.empty()) {
     LOGERR("Configuration not complete for %s", _currFileName.c_str());
-
-    err = EXIT_FAILURE;
+    return EXIT_FAILURE;
   }
 
-  // reset syntax checker in both success or failure
-  _syntaxChecker.reset();
-
-  return err;
+  return EXIT_SUCCESS;
 }
 
 int32_t ResourceParser::setSingleRowData(const std::string& rowData,

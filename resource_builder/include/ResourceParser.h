@@ -21,44 +21,35 @@
 class ResourceParser {
  public:
   ResourceParser();
-  ~ResourceParser() = default;
 
   /** @brief used to initialize the ResourceParser by:
    *              > location the project folder on the hard drive;
    *              > setting engine resource file and font font names;
    *              > open streams for those files;
    *
+   *  @param const std::string & - project path to parse
+   *
    *  @returns int32_t - error code
    * */
-  int32_t init(const std::string & projectFolderName);
+  int32_t init(const std::string & projectPath);
 
   /** @brief used to parse project tree directory recursively, search
    *                                      for .rsrc files and parse them.
    *
-   *  @param const std::string & - project name to parse
+
    *
    *  @returns int32_t - error code
    * */
-  int32_t parseResourceTree(const std::string& projectName);
+  int32_t parseResourceTree();
 
  private:
   /** @brief used to setup project tree directory for parsing.
    *
-   *  @param const std::string & - project name to parse
-   *
    *  @returns int32_t - error code
    * */
-  int32_t setupResourceTree(const std::string& projectName);
+  int32_t setupResourceTree();
 
-  /** @brief used to parse provided directory recursively, search
-   *                                      for .rsrc files and parse them.
-   *         NOTE: since recursion is used, error code is passed
-   *                                            as a reference parameter.
-   *
-   *  @param const std::string & - directory name
-   *  @param int32_t &           - error code
-   * */
-  void parseDirectory(const std::string& dir, int32_t& errCode);
+  int32_t processAllFiles();
 
   /** @brief used to determine whether the selected file is a .rsrc file
    *
@@ -66,7 +57,7 @@ class ResourceParser {
    *
    *  @returns bool              - is .rsrs file or not
    * */
-  bool isResourceFile(const std::string& fileName);
+  bool isResourceFile(const std::string& fileName) const;
 
   /** @brief used to open file stream from file name
    *
@@ -156,11 +147,6 @@ class ResourceParser {
 
   void resetInternals();
 
-  /* Define the names of project folder, resource and font file names */
-  const std::string _RESOURCES_BIN_NAME;
-  const std::string _FONTS_BIN_NAME;
-  const std::string _SOUNDS_BIN_NAME;
-
   /** Temporary variables used to remember certain
    *                                   file states (names, paths, etc).
    *  Since we are using recursive approach when parsing
@@ -168,8 +154,8 @@ class ResourceParser {
    *  is not to pass the all around to dozen of functions and create
    *  unnecessary overhead.
    * */
-  std::string _projectFolder;
   std::string _projectAbsFilePath;
+  std::string _projectFolder;
   std::string _startDir;
   std::string _currDirPath;
   std::string _currFileName;

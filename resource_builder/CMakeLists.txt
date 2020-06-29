@@ -9,6 +9,11 @@ set(_SRC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/src")
    
 add_executable(
     ${PROJECT_NAME} 
+        "${_INCLUDE_DIR}/FileBuilder.h"
+        "${_INCLUDE_DIR}/FileParser.h"
+        "${_INCLUDE_DIR}/ResourceParser.h"
+        "${_INCLUDE_DIR}/SyntaxChecker.h"
+    
         "${_SRC_DIR}/FileBuilder.cpp"
         "${_SRC_DIR}/FileParser.cpp"
         "${_SRC_DIR}/main.cpp"
@@ -38,13 +43,15 @@ if(USE_IWYU)
 endif(USE_IWYU)
 
 
+## TODO think of a better way! Maybe export/install/import?
+
 #generate symbolic link for resourceBuilder after build is ready
 #also add the -f (--force) command in order to
 #override the existing symbolic link (if any)
 add_custom_command(
     TARGET ${PROJECT_NAME} POST_BUILD
     COMMAND
-    ln -sf resource_builder/resource_builder resourceBuilderSymLink)
+    ln -sf tools/resource_builder/resource_builder resourceBuilderSymLink)
            
 #move symbolic link to project build directory
 add_custom_command(

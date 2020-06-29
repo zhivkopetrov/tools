@@ -1,6 +1,7 @@
 // Corresponding header
 #include "FileParser.h"
 
+// C system headers
 #include <arpa/inet.h>
 
 // C++ system headers
@@ -10,7 +11,7 @@
 // Other libraries headers
 
 // Own components headers
-#include "utils/datatype/EnumClassUtils.hpp"
+#include "utils/data_type/EnumClassUtils.hpp"
 #include "utils/drawing/Rectangle.h"
 #include "utils/Log.h"
 
