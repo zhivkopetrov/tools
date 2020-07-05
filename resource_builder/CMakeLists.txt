@@ -51,7 +51,7 @@ endif(USE_IWYU)
 add_custom_command(
     TARGET ${PROJECT_NAME} POST_BUILD
     COMMAND
-    ln -sf tools/resource_builder/resource_builder resourceBuilderSymLink)
+    ln -sf tools/resource_builder/${PROJECT_NAME} resourceBuilderSymLink)
            
 #move symbolic link to project build directory
 add_custom_command(
