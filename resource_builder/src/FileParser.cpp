@@ -37,6 +37,19 @@ FileParser::FileParser()
 
 FileParser::~FileParser() { closeFileAndReset(); }
 
+void FileParser::setCompleteFilePathFromProject(
+    const std::string& relativeFilePath) {
+  _absoluteFilePath = _absoluteProjectPath;
+  _absoluteFilePath.append(relativeFilePath);
+
+  setFileTypeInternal();
+}
+
+void FileParser::setRelativeFilePath(const std::string& relativeFilePath) {
+  _relativeFilePath = relativeFilePath;
+  buildAbsoluteFilePath();
+}
+
 int32_t FileParser::openFile() {
   int32_t err = EXIT_SUCCESS;
 

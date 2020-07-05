@@ -157,8 +157,6 @@ class ResourceParser {
   std::string _projectAbsFilePath;
   std::string _projectFolder;
   std::string _startDir;
-  std::string _currDirPath;
-  std::string _currFileName;
   std::string _currAbsFilePath;
   std::string _currDestFile;
   std::string _currHeaderGuard;

@@ -55,10 +55,7 @@ class FileParser {
    *
    *  @param const std::string & - relative image path
    * */
-  inline void setRelativeFilePath(const std::string& relativeFilePath) {
-    _relativeFilePath = relativeFilePath;
-    buildAbsoluteFilePath();
-  }
+  void setRelativeFilePath(const std::string& relativeFilePath);
 
   /** @brief used to set relative image path
    *         NOTE: the function automatically builds up
@@ -71,13 +68,7 @@ class FileParser {
    *
    *  @param const std::string & - relative image path
    * */
-  inline void setCompleteFilePathFromProject(
-      const std::string& relativeFilePath) {
-    _absoluteFilePath = _absoluteProjectPath;
-    _absoluteFilePath.append(relativeFilePath);
-
-    setFileTypeInternal();
-  }
+  void setCompleteFilePathFromProject(const std::string& relativeFilePath);
 
   /** @brief used to reset relative folder path
    * */

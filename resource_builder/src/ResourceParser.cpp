@@ -40,6 +40,8 @@ int32_t ResourceParser::init(const std::string & projectPath) {
   _projectAbsFilePath = projectPath.empty() ?
       FileSystemUtils::getRootDirectory() : projectPath;
 
+  _fileParser.setAbsoluteProjectPath(_projectAbsFilePath);
+
   // Reserve enough memory for the whole parse process, no no unneeded
   // internal vector grow is invoked
   _fileData.reserve(200);
@@ -50,8 +52,14 @@ int32_t ResourceParser::init(const std::string & projectPath) {
 int32_t ResourceParser::parseResourceTree() {
   int32_t err = EXIT_SUCCESS;
   _startDir = _projectAbsFilePath;
+  _projectFolder = _projectAbsFilePath;
+  if (_projectFolder.back() == '/') {
+    _projectFolder.pop_back();
+  }
   _projectFolder =
-      FileSystemUtils::getCurrentFolderFromDirectory(_projectAbsFilePath);
+      FileSystemUtils::getFileNameFromAbsolutePath(_projectFolder);
+  LOGM("_startDir: %s", _startDir.c_str());
+  LOGM("_projectFolder: %s", _projectFolder.c_str());
 
   LOG("======================================");
   LOG("Starting recursive search on %s", _startDir.c_str());
@@ -138,8 +146,10 @@ int32_t ResourceParser::setupResourceTree() {
   resourcesFolder.append(_projectFolder).append("/").append("resources");
 
   if (!FileSystemUtils::isDirectoryPresent(resourcesFolder)) {
-    if (EXIT_SUCCESS != FileSystemUtils::createDirectory(resourcesFolder)) {
-      LOGERR("createDirectory() failed for '%s'", resourcesFolder.c_str());
+    if (EXIT_SUCCESS !=
+        FileSystemUtils::createDirectoryRecursive(resourcesFolder)) {
+      LOGERR("createDirectoryRecursive() failed for '%s'",
+          resourcesFolder.c_str());
       return EXIT_FAILURE;
     }
   }
@@ -180,10 +190,10 @@ int32_t ResourceParser::processAllFiles() {
     if (!isResourceFile(fileName)) {
       continue;
     }
-    _currFileName = fileName;
+    _currAbsFilePath = fileName;
 
     if (EXIT_SUCCESS != buildResourceFile()) {
-      LOGERR("Error in buildResourceFile() for %s.", _currFileName.c_str());
+      LOGERR("Error in buildResourceFile() for %s.", _currAbsFilePath.c_str());
       LOGR("Cancelling parsing for next files");
       return EXIT_FAILURE;
     }
@@ -232,7 +242,7 @@ void ResourceParser::closeSourceStream() {
 }
 
 int32_t ResourceParser::buildResourceFile() {
-  LOG_ON_SAME_LINE("Parsing %s ... ", _currFileName.c_str());
+  LOG_ON_SAME_LINE("Parsing %s ... ", _currAbsFilePath.c_str());
 
   int32_t err = buildResFileInternalData();
 
@@ -240,7 +250,7 @@ int32_t ResourceParser::buildResourceFile() {
     LOGERR(
         "Error in buildResourceFile(), Resource file from %s "
         "could not be created",
-        _currFileName.c_str());
+        _currAbsFilePath.c_str());
   }
 
   if (EXIT_SUCCESS == err) {
@@ -250,7 +260,7 @@ int32_t ResourceParser::buildResourceFile() {
       LOGERR(
           "Error in openSourceStream(), Resource file from %s "
           "could not be created",
-          _currFileName.c_str());
+          _currAbsFilePath.c_str());
     }
   }
 
@@ -258,7 +268,7 @@ int32_t ResourceParser::buildResourceFile() {
     err = parseFileData();
 
     if (EXIT_SUCCESS != err) {
-      LOGERR("Error in parseFileData() for %s", _currFileName.c_str());
+      LOGERR("Error in parseFileData() for %s", _currAbsFilePath.c_str());
     }
   }
 
@@ -276,7 +286,7 @@ int32_t ResourceParser::buildResourceFile() {
 
     LOGG("[Done]");
   } else {
-    LOG_ON_SAME_LINE("Parsing of %s ... ", _currFileName.c_str());
+    LOG_ON_SAME_LINE("Parsing of %s ... ", _currAbsFilePath.c_str());
     LOGR("[Failed]");
   }
 
@@ -291,36 +301,37 @@ int32_t ResourceParser::buildResourceFile() {
 int32_t ResourceParser::buildResFileInternalData() {
   int32_t err = EXIT_SUCCESS;
 
-  std::string fileName = "";  // file name with no extension E.g. RoR or Bh
   uint64_t prjPathStartIdx = 0;
   uint64_t prjPathEndIdx = 0;
 
   // locate dot index so we can substring the instance name
-  const uint64_t dotPos = _currFileName.find(".");
+  const uint64_t dotPos = _currAbsFilePath.find(".");
 
   // dotPos not found
   if (std::string::npos == dotPos) {
     LOGERR("Internal error. Resource file from %s could not be created",
-           _currFileName.c_str());
+        _currAbsFilePath.c_str());
     return EXIT_FAILURE;
   }
-
-  fileName = _currFileName.substr(0, dotPos);
+  const std::string absFileName = _currAbsFilePath.substr(0, dotPos);
+  //filename with no extension
+  const std::string fileName =
+      FileSystemUtils::getFileNameFromAbsolutePath(absFileName);
 
   prjPathStartIdx = _currAbsFilePath.find(_projectFolder);
   if (prjPathStartIdx == std::string::npos) {
     LOGERR("Internal error. Resource file from %s could not be created",
-           _currFileName.c_str());
+        _currAbsFilePath.c_str());
     return EXIT_FAILURE;
   }
 
-  prjPathStartIdx += _projectFolder.size();
+  prjPathStartIdx += _projectFolder.size() + 1;
 
   prjPathEndIdx = _currAbsFilePath.find(fileName);
 
   if (std::string::npos == prjPathEndIdx) {
     LOGERR("Internal error. Resource file from %s could not be created",
-           _currFileName.c_str());
+        _currAbsFilePath.c_str());
     return EXIT_FAILURE;
   }
 
@@ -333,7 +344,7 @@ int32_t ResourceParser::buildResFileInternalData() {
   _fileParser.setRelativeFolderPath(PROJECT_PATH);
 
   _currHeaderGuard = PROJECT_PATH;
-  _currHeaderGuard.append(fileName);
+  _currHeaderGuard.append(absFileName);
   _currHeaderGuard.append("RESOURCES_H_");
 
   const uint64_t headerGuardSize = _currHeaderGuard.size();
@@ -346,7 +357,7 @@ int32_t ResourceParser::buildResFileInternalData() {
     }
   }
 
-  _currDestFile = _currDirPath.append(fileName);
+  _currDestFile = absFileName;
   _currDestFile.append("Resources");
 
   _currNamespace = fileName;
@@ -393,7 +404,7 @@ int32_t ResourceParser::parseFileData() {
     } else {
       LOGERR(
           "Internal error occurred on line: %d. Canceling parsing for %s",
-          parsedRowNumber, _currFileName.c_str());
+          parsedRowNumber, _currAbsFilePath.c_str());
       return EXIT_FAILURE;
     }
 
@@ -418,7 +429,7 @@ int32_t ResourceParser::parseFileData() {
   }
 
   if (_fileData.empty()) {
-    LOGERR("Configuration not complete for %s", _currFileName.c_str());
+    LOGERR("Configuration not complete for %s", _currAbsFilePath.c_str());
     return EXIT_FAILURE;
   }
 
@@ -713,8 +724,6 @@ int32_t ResourceParser::setTextureLoadType(const std::string& rowData,
 
 void ResourceParser::resetInternals() {
   _startDir = "Not set";
-  _currDirPath = "Not set";
-  _currFileName = "Not set";
   _currAbsFilePath = "Not set";
   _currDestFile = "Not set";
   _currHeaderGuard = "Not set";
