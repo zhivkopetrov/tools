@@ -14,6 +14,7 @@
 
 // Own components headers
 #include "resource_utils/defines/ResourceDefines.h"
+#include "resource_utils/common/ResourceFileHeader.h"
 #include "utils/data_type/StringUtils.h"
 #include "utils/file_system/FileSystemUtils.h"
 #include "utils/Log.h"
@@ -23,10 +24,6 @@ static std::hash<std::string> hashFunction;
 
 
 namespace {
-constexpr auto RESOURCES_BIN_NAME = "resources.bin";
-constexpr auto FONTS_BIN_NAME = "fonts.bin";
-constexpr auto SOUNDS_BIN_NAME = "sounds.bin";
-
 constexpr auto EXTERNAL_PATH_PREFIX = "external - ";
 constexpr auto EXTERNAL_PATH_PREFIX_SIZE = 11;
 constexpr auto MB_PRECISION_AFTER_DECIMAL = 3;
@@ -58,8 +55,6 @@ int32_t ResourceParser::parseResourceTree() {
   }
   _projectFolder =
       FileSystemUtils::getFileNameFromAbsolutePath(_projectFolder);
-  LOGM("_startDir: %s", _startDir.c_str());
-  LOGM("_projectFolder: %s", _projectFolder.c_str());
 
   LOG("======================================");
   LOG("Starting recursive search on %s", _startDir.c_str());
@@ -106,27 +101,30 @@ int32_t ResourceParser::parseResourceTree() {
     LOG_ON_SAME_LINE(
         "%s generation ... (%lu static files with size: %s "
         "and %lu dynamic files with size: %s) ",
-        RESOURCES_BIN_NAME, _staticWidgetsCounter,
+        ResourceFileHeader::getResourceBinName().c_str(), _staticWidgetsCounter,
         itemsSizeStr[0].c_str(), _dynamicWidgetsCounter,
         itemsSizeStr[1].c_str());
     LOGG("[Done]");
     LOG_ON_SAME_LINE("%s generation ... (%lu static files with size: %s) ",
-                     FONTS_BIN_NAME, _fontsCounter,
+                     ResourceFileHeader::getFontBinName().c_str(), _fontsCounter,
                      itemsSizeStr[2].c_str());
     LOGG("[Done]");
     LOG_ON_SAME_LINE("%s generation ... (%lu static files with size: %s) ",
-                     SOUNDS_BIN_NAME,
+                     ResourceFileHeader::getSoundBinName().c_str(),
                      (_musicsCounter + _chunksCounter),
                      itemsSizeStr[3].c_str());
     LOGG("[Done]");
   } else {
     LOG_ON_SAME_LINE("\nRecursive search on %s ... ", _startDir.c_str());
     LOGR("[Failed]");
-    LOG_ON_SAME_LINE("%s generation ... ", RESOURCES_BIN_NAME);
+    LOG_ON_SAME_LINE("%s generation ... ",
+                     ResourceFileHeader::getResourceBinName().c_str());
     LOGR("[Failed]");
-    LOG_ON_SAME_LINE("%s generation ... ", FONTS_BIN_NAME);
+    LOG_ON_SAME_LINE("%s generation ... ",
+                     ResourceFileHeader::getFontBinName().c_str());
     LOGR("[Failed]");
-    LOG_ON_SAME_LINE("%s generation ... ", SOUNDS_BIN_NAME);
+    LOG_ON_SAME_LINE("%s generation ... ",
+                     ResourceFileHeader::getSoundBinName().c_str());
     LOGR("[Failed]");
   }
   LOG("=======================================");
@@ -154,20 +152,17 @@ int32_t ResourceParser::setupResourceTree() {
     }
   }
 
-  std::string resFile = resourcesFolder;
-  resFile.append("/").append(RESOURCES_BIN_NAME);
+  resourcesFolder.append("/");
+  const std::string resFile =
+      resourcesFolder + ResourceFileHeader::getResourceBinName();
+  const std::string fontFile =
+      resourcesFolder + ResourceFileHeader::getFontBinName();
+  const std::string soundFile =
+      resourcesFolder + ResourceFileHeader::getSoundBinName();
 
-  std::string fontFile = resourcesFolder;
-  fontFile.append("/").append(FONTS_BIN_NAME);
-
-  std::string soundFile = resourcesFolder;
-  soundFile.append("/").append(SOUNDS_BIN_NAME);
-
-  _fileBuilder.setCombinedDestFileNames(resFile, fontFile, soundFile);
-
-  if (EXIT_SUCCESS != _fileBuilder.openCombinedStreams()) {
+  if (EXIT_SUCCESS !=
+      _fileBuilder.openCombinedStreams(resFile, fontFile, soundFile)) {
     LOGERR("Error in _fileBuilder.openCombinedStreams()");
-
     return EXIT_FAILURE;
   }
 

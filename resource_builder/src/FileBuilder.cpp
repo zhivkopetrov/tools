@@ -21,75 +21,64 @@ FileBuilder::FileBuilder() {}
 
 FileBuilder::~FileBuilder() { closeCombinedStreams(); }
 
-int32_t FileBuilder::openCombinedStreams() {
-  int32_t err = EXIT_SUCCESS;
-
+int32_t FileBuilder::openCombinedStreams(const std::string& resFileName,
+                                         const std::string& fontFileName,
+                                         const std::string& soundFileName) {
   // open fileStream for write
-  _combinedResDestStream.open(_combinedResFileName.c_str(),
+  _combinedResDestStream.open(resFileName.c_str(),
                               std::ofstream::out | std::ofstream::binary);
 
   if (!_combinedResDestStream) {
     LOGERR("Error, could not open ofstream for fileName: %s, reason: %s",
-           _combinedResFileName.c_str(), strerror(errno));
-
-    err = EXIT_FAILURE;
-  } else {
-    _combinedResDestStream << ResourceFileHeader::getEngineResHeader()
-                           << ResourceFileHeader::getEngineValueReservedSlot()
-                           << "\n\n"
-                           << ResourceFileHeader::getEngineResHeaderAddition()
-                           << ResourceFileHeader::getEngineValueReservedSlot()
-                           << "\n\n"
-                           << ResourceFileHeader::getEngineFileSizeHeader()
-                           << ResourceFileHeader::getEngineValueReservedSlot()
-                           << "\n\n";
+        resFileName.c_str(), strerror(errno));
+    return EXIT_FAILURE;
   }
 
-  if (EXIT_SUCCESS == err) {
-    // open fileStream for write
-    _combinedFontDestStream.open(_combinedFontFileName.c_str(),
-                                 std::ofstream::out | std::ofstream::binary);
+  _combinedResDestStream << ResourceFileHeader::getEngineResHeader()
+                         << ResourceFileHeader::getEngineValueReservedSlot()
+                         << "\n\n"
+                         << ResourceFileHeader::getEngineResHeaderAddition()
+                         << ResourceFileHeader::getEngineValueReservedSlot()
+                         << "\n\n"
+                         << ResourceFileHeader::getEngineFileSizeHeader()
+                         << ResourceFileHeader::getEngineValueReservedSlot()
+                         << "\n\n";
 
-    if (!_combinedFontDestStream) {
-      LOGERR(
-          "Error, could not open ofstream for fileName: %s, reason: "
-          "%s",
-          _combinedFontFileName.c_str(), strerror(errno));
+  // open fileStream for write
+  _combinedFontDestStream.open(fontFileName.c_str(),
+                               std::ofstream::out | std::ofstream::binary);
 
-      err = EXIT_FAILURE;
-    } else {
-      _combinedFontDestStream
-          << ResourceFileHeader::getEngineFontHeader()
-          << ResourceFileHeader::getEngineValueReservedSlot() << "\n\n"
-          << ResourceFileHeader::getEngineFileSizeHeader()
-          << ResourceFileHeader::getEngineValueReservedSlot() << "\n\n";
-    }
+  if (!_combinedFontDestStream) {
+    LOGERR("Error, could not open ofstream for fileName: %s, reason: %s",
+           fontFileName.c_str(), strerror(errno));
+    return EXIT_FAILURE;
   }
 
-  if (EXIT_SUCCESS == err) {
-    // open fileStream for write
-    _combinedSoundDestStream.open(_combinedSoundFileName.c_str(),
-                                  std::ofstream::out | std::ofstream::binary);
+  _combinedFontDestStream
+      << ResourceFileHeader::getEngineFontHeader()
+      << ResourceFileHeader::getEngineValueReservedSlot() << "\n\n"
+      << ResourceFileHeader::getEngineFileSizeHeader()
+      << ResourceFileHeader::getEngineValueReservedSlot() << "\n\n";
 
-    if (!_combinedSoundDestStream) {
-      LOGERR(
-          "Error, could not open ofstream for fileName: %s, reason: "
-          "%s",
-          _combinedSoundFileName.c_str(), strerror(errno));
+  // open fileStream for write
+  _combinedSoundDestStream.open(soundFileName.c_str(),
+                                std::ofstream::out | std::ofstream::binary);
 
-      err = EXIT_FAILURE;
-    } else {
-      _combinedSoundDestStream
-          << ResourceFileHeader::getEngineSoundHeader()
-          << ResourceFileHeader::getEngineValueReservedSlot() << "\n\n"
-          << ResourceFileHeader::getEngineSoundHeaderAddition()
-          << ResourceFileHeader::getEngineValueReservedSlot() << "\n\n"
-          << ResourceFileHeader::getEngineFileSizeHeader()
-          << ResourceFileHeader::getEngineValueReservedSlot() << "\n\n";
-    }
+  if (!_combinedSoundDestStream) {
+    LOGERR("Error, could not open ofstream for fileName: %s, reason: %s",
+           soundFileName.c_str(), strerror(errno));
+    return EXIT_FAILURE;
   }
 
-  return err;
+  _combinedSoundDestStream
+      << ResourceFileHeader::getEngineSoundHeader()
+      << ResourceFileHeader::getEngineValueReservedSlot() << "\n\n"
+      << ResourceFileHeader::getEngineSoundHeaderAddition()
+      << ResourceFileHeader::getEngineValueReservedSlot() << "\n\n"
+      << ResourceFileHeader::getEngineFileSizeHeader()
+      << ResourceFileHeader::getEngineValueReservedSlot() << "\n\n";
+
+  return EXIT_SUCCESS;
 }
 
 void FileBuilder::closeCombinedStreams() {
@@ -112,14 +101,6 @@ void FileBuilder::closeCombinedStreams() {
   _combinedSoundDestStream.clear();
 }
 
-void FileBuilder::setCombinedDestFileNames(
-    const std::string& resFileName, const std::string& fontFileName,
-    const std::string& soundFileName) {
-  _combinedResFileName = resFileName;
-  _combinedFontFileName = fontFileName;
-  _combinedSoundFileName = soundFileName;
-}
-
 int32_t FileBuilder::openDestStreams() {
   // open _destStreamStatic for write
   _destStreamStatic.open(_destFileNameStatic.c_str(),
@@ -128,7 +109,6 @@ int32_t FileBuilder::openDestStreams() {
   if (!_destStreamStatic) {
     LOGERR("Error, could not open ofstream for fileName: %s, reason: %s",
            _destFileNameStatic.c_str(), strerror(errno));
-
     return EXIT_FAILURE;
   }
 
@@ -139,7 +119,6 @@ int32_t FileBuilder::openDestStreams() {
   if (!_destStreamDynamic) {
     LOGERR("Error, could not open ofstream for fileName: %s, reason: %s",
            _destFileNameDynamic.c_str(), strerror(errno));
-
     return EXIT_FAILURE;
   }
 
@@ -150,7 +129,6 @@ int32_t FileBuilder::openDestStreams() {
   if (!_destStreamDynamicValues) {
     LOGERR("Error, could not open ofstream for fileName: %s, reason: %s",
            _destFileNameDynamicValues.c_str(), strerror(errno));
-
     return EXIT_FAILURE;
   }
 
@@ -275,10 +253,6 @@ void FileBuilder::fillCombinedDestFile(const std::vector<CombinedData>& data) {
 }
 
 void FileBuilder::autoGenerateResFile(const std::vector<CombinedData>& data) {
-  const uint32_t DATA_SIZE = static_cast<uint32_t>(data.size());
-
-  int32_t itemsSize = 0;  // in kBytes
-
   // Write header file
   _destStreamStatic << ResourceFileHeader::getResourceFileHeader() << "#ifndef "
                     << _headerGuardsStatic << '\n'
@@ -309,8 +283,9 @@ void FileBuilder::autoGenerateResFile(const std::vector<CombinedData>& data) {
   // reused multiple times
   std::ostringstream hexHashValue;
 
-  for (uint32_t i = 0; i < DATA_SIZE; ++i) {
-    itemsSize += data[i].header.fileSize;
+  int32_t itemsSize = 0;  // in kBytes
+  for (const auto &dataEntry : data) {
+    itemsSize += dataEntry.header.fileSize;
 
     // set stream basefield manipulator to uppercase hex
     hexHashValue << std::hex << std::uppercase;
@@ -318,15 +293,15 @@ void FileBuilder::autoGenerateResFile(const std::vector<CombinedData>& data) {
     // by standard setw is not sticky manipulator so we need to use it
     // on every stream write
     hexHashValue << std::setw(MAX_UINT64_T_HEX_LENGTH) << std::setfill('0')
-                 << data[i].header.hashValue;
+                 << dataEntry.header.hashValue;
 
-    if (0 == data[i].textureLoadType)  // textureLoadType::on_init
+    if (0 == dataEntry.textureLoadType)  // textureLoadType::on_init
     {
-      _destStreamStatic << TAB << TAB << data[i].tagName << " = "
+      _destStreamStatic << TAB << TAB << dataEntry.tagName << " = "
                         << "0x" << hexHashValue.str() << ",\n";
     } else  // textureLoadType::on_demand
     {
-      _destStreamDynamic << TAB << TAB << data[i].tagName << " = "
+      _destStreamDynamic << TAB << TAB << dataEntry.tagName << " = "
                          << "0x" << hexHashValue.str() << ",\n";
 
       _destStreamDynamicValues << "0x" << hexHashValue.str() << '\n';
@@ -364,7 +339,7 @@ void FileBuilder::autoGenerateResFile(const std::vector<CombinedData>& data) {
       (ITEMS_SIZE_MB.substr(0, DOT_POS + 1 + MB_PRECISION_AFTER_DECIMAL));
   itemsSizeMbStr.append(" MB");
 
-  LOG_ON_SAME_LINE("(%u static files with size: %s) ", DATA_SIZE,
+  LOG_ON_SAME_LINE("(%zu static files with size: %s) ", data.size(),
                    itemsSizeMbStr.c_str());
 }
 

@@ -22,19 +22,15 @@ class FileBuilder {
 
   /** @brief used to open combined resource file and font file streams
    *
-   *  @returns int32_t - error code
-   * */
-  int32_t openCombinedStreams();
-
-  /** @brief used to combined resource file and font file names
-   *
    *  @param const std::string & - name of the engine packed resource file
    *  @param const std::string & - name of the engine packed font file
    *  @param const std::string & - name of the engine packed sound file
+   *
+   *  @returns int32_t - error code
    * */
-  void setCombinedDestFileNames(const std::string& resFileName,
-                                const std::string& fontFileName,
-                                const std::string& soundFileName);
+  int32_t openCombinedStreams(const std::string& resFileName,
+                              const std::string& fontFileName,
+                              const std::string& soundFileName);
 
   /** @brief used to open individual games resource header and cpp files
    *
@@ -153,21 +149,18 @@ class FileBuilder {
    * in the individual .rsrc files
    * */
   std::ofstream _combinedResDestStream;
-  std::string _combinedResFileName;
 
   /* Destination stream for combined only font file
    * this file contains information for every single font listed
    * in the individual .rsrc files
    * */
   std::ofstream _combinedFontDestStream;
-  std::string _combinedFontFileName;
 
   /* Destination stream for combined only sound file
    * this file contains information for every single sound listed
    * in the individual .rsrc files
    * */
   std::ofstream _combinedSoundDestStream;
-  std::string _combinedSoundFileName;
 
   /* Destination streams for every individual game resource file
    * that is being auto-generated
