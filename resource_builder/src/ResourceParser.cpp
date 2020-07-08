@@ -141,7 +141,8 @@ int32_t ResourceParser::setupResourceTree() {
   projectAbsBuildFilePath.append("build/");
 
   std::string resourcesFolder = projectAbsBuildFilePath;
-  resourcesFolder.append(_projectFolder).append("/").append("resources");
+  resourcesFolder.append(_projectFolder).append("/").append(
+      ResourceFileHeader::getResourcesBinFolderName());
 
   if (!FileSystemUtils::isDirectoryPresent(resourcesFolder)) {
     if (EXIT_SUCCESS !=
