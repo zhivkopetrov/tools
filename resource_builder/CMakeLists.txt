@@ -4,21 +4,21 @@ cmake_minimum_required(VERSION 3.10.2)
 
 project(resource_builder)
 
-set(_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/include")
-set(_SRC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/src")
+set(_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include)
+set(_SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src)
    
 add_executable(
     ${PROJECT_NAME} 
-        "${_INCLUDE_DIR}/FileBuilder.h"
-        "${_INCLUDE_DIR}/FileParser.h"
-        "${_INCLUDE_DIR}/ResourceParser.h"
-        "${_INCLUDE_DIR}/SyntaxChecker.h"
+        ${_INCLUDE_DIR}/FileBuilder.h
+        ${_INCLUDE_DIR}/FileParser.h
+        ${_INCLUDE_DIR}/ResourceParser.h
+        ${_INCLUDE_DIR}/SyntaxChecker.h
     
-        "${_SRC_DIR}/FileBuilder.cpp"
-        "${_SRC_DIR}/FileParser.cpp"
-        "${_SRC_DIR}/main.cpp"
-        "${_SRC_DIR}/ResourceParser.cpp"
-        "${_SRC_DIR}/SyntaxChecker.cpp"
+        ${_SRC_DIR}/FileBuilder.cpp
+        ${_SRC_DIR}/FileParser.cpp
+        ${_SRC_DIR}/main.cpp
+        ${_SRC_DIR}/ResourceParser.cpp
+        ${_SRC_DIR}/SyntaxChecker.cpp
 )
 
 set_target_cpp_standard(${PROJECT_NAME} 17)

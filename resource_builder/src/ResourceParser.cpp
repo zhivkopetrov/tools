@@ -21,7 +21,10 @@
 
 static std::hash<std::string> hashFunction;
 
-
+#warning fix the OutData* to reference
+#warning fix the if(EXIT_SUCCESS == err)
+#warning put all new filePaths into std::unordered_set<std::string>
+#warning if the path exists -> put developer hint and return error
 
 namespace {
 constexpr auto EXTERNAL_PATH_PREFIX = "external - ";
@@ -496,7 +499,7 @@ int32_t ResourceParser::fillPath(const std::string& rowData,
     _fileParser.setRelativeFilePath(rowData);
   } else {
     // use non-local file placement (file outside the local folder)
-    // Example: commonresources/p/attendantmenu/add_button.png
+    // Example: gui/p/menu/add_button.png
     _fileParser.setCompleteFilePathFromProject(rowData.substr(
         EXTERNAL_PATH_PREFIX_SIZE, rowData.size() - EXTERNAL_PATH_PREFIX_SIZE));
   }
@@ -679,8 +682,6 @@ int32_t ResourceParser::fillDescription(const std::string& rowData,
 
 int32_t ResourceParser::setImagePosition(const std::string& rowData,
                                          CombinedData* outData) {
-  int32_t err = EXIT_SUCCESS;
-
   std::vector<int32_t> data;
   const uint32_t DATA_SIZE = 2;
 
@@ -691,17 +692,14 @@ int32_t ResourceParser::setImagePosition(const std::string& rowData,
   } else {
     LOGERR("Error in extractIntsFromString() for data: %s, maxNumbers: %d",
            rowData.c_str(), DATA_SIZE);
-
-    err = EXIT_FAILURE;
+    return EXIT_FAILURE;
   }
 
-  return err;
+  return EXIT_SUCCESS;
 }
 
 int32_t ResourceParser::setTextureLoadType(const std::string& rowData,
                                            CombinedData* outData) {
-  int32_t err = EXIT_SUCCESS;
-
   if ("on_init" == rowData) {
     outData->textureLoadType = ResourceDefines::TextureLoadType::ON_INIT;
   } else if ("on_demand" == rowData) {
@@ -711,11 +709,10 @@ int32_t ResourceParser::setTextureLoadType(const std::string& rowData,
         "Error wrong description for .rsrc file: %s, with tag: "
         "%s. Second argument must be 'on_init' or 'on_demand'",
         _currAbsFilePath.c_str(), outData->tagName.c_str());
-
-    err = EXIT_FAILURE;
+    return EXIT_FAILURE;
   }
 
-  return err;
+  return EXIT_SUCCESS;
 }
 
 void ResourceParser::resetInternals() {
