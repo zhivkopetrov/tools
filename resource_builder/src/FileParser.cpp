@@ -611,7 +611,7 @@ int32_t FileParser::fillSpriteData(const ResourceDefines::SpriteLayout& layout,
     default:
       err = EXIT_FAILURE;
       LOGERR("Internal error, Invalid enum class value: %hhu",
-             getEnumClassValue(layout));
+             getEnumValue(layout));
       break;
   }
 
