@@ -94,12 +94,12 @@ class FileParser {
    *         NOTE: width and height data are read directly
    *                                          from the image header.
    *
-   *  @param int32_t * - image width
-   *  @param int32_t * - image height
+   *  @param int32_t & - image width
+   *  @param int32_t & - image height
    * */
-  inline void getImageDimension(int32_t* outWidth, int32_t* outHeight) {
-    *outWidth = _imageWidth;
-    *outHeight = _imageHeight;
+  inline void getImageDimension(int32_t& outWidth, int32_t& outHeight) {
+    outWidth = _imageWidth;
+    outHeight = _imageHeight;
   }
 
   /** @brief used to open file descriptor
@@ -137,11 +137,11 @@ class FileParser {
    *              > SpriteLayout::VECTICAL;
    *              > SpriteLayout::MIXED;
    *
-   *  @param SpriteLayout * - out SpriteLayout.
+   *  @param SpriteLayout & - out SpriteLayout.
    *                              On success the proper layout is set.
    *                              On failure SpriteLayout::UNKNOWN is set.
    * */
-  bool isValidSpriteDescription(ResourceDefines::SpriteLayout* outLayout);
+  bool isValidSpriteDescription(ResourceDefines::SpriteLayout& outLayout);
 
   /** @brief used to determine whether correct sprite manual description
    *                     was provided in the .rsrc file "description" tag.
@@ -153,12 +153,12 @@ class FileParser {
    *                from the provided in the .rsrc file "description" tag.
    *
    *  @param const SpriteLayout &     - currently set SpriteLayout.
-   *  @param std::vector<Rectangle> * - fully populated sprite description
+   *  @param std::vector<Rectangle> & - fully populated sprite description
    *
    *  @returns int32_t                - error code
    * */
   int32_t fillSpriteData(const ResourceDefines::SpriteLayout& layout,
-                         std::vector<Rectangle>* outData);
+                         std::vector<Rectangle>& outData);
 
   /** @brief used to determine whether the processed file is graphical one
    *                         e.g. with extensions .jpg, .png, .gif or not
@@ -213,24 +213,24 @@ class FileParser {
 
   /** @brief used to fill sprite description as horizontal layout
    *
-   *  @param std::vector<Rectangle>* outData - fully populated sprite
+   *  @param std::vector<Rectangle>& outData - fully populated sprite
    *                                                          description
    * */
-  void setHorizontalSpriteLayout(std::vector<Rectangle>* outData);
+  void setHorizontalSpriteLayout(std::vector<Rectangle>& outData);
 
   /** @brief used to fill sprite description as vertical layout
    *
-   *  @param std::vector<Rectangle> * outData - fully populated sprite
+   *  @param std::vector<Rectangle> & outData - fully populated sprite
    *                                                          description
    * */
-  void setVerticalSpriteLayout(std::vector<Rectangle>* outData);
+  void setVerticalSpriteLayout(std::vector<Rectangle>& outData);
 
   /** @brief used to fill sprite description as mixed layout
    *
-   *  @param std::vector<Rectangle> * outData - fully populated sprite
+   *  @param std::vector<Rectangle> & outData - fully populated sprite
    *                                                          description
    * */
-  void setMixedSpriteLayout(std::vector<Rectangle>* outData);
+  void setMixedSpriteLayout(std::vector<Rectangle>& outData);
 
   /** @brief used to read the file size
    * */

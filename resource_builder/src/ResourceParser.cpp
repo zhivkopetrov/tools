@@ -21,11 +21,6 @@
 
 static std::hash<std::string> hashFunction;
 
-#warning fix the OutData* to reference
-#warning fix the if(EXIT_SUCCESS == err)
-#warning put all new filePaths into std::unordered_set<std::string>
-#warning if the path exists -> put developer hint and return error
-
 namespace {
 constexpr auto EXTERNAL_PATH_PREFIX = "external - ";
 constexpr auto EXTERNAL_PATH_PREFIX_SIZE = 11;
@@ -216,8 +211,6 @@ bool ResourceParser::isResourceFile(const std::string& fileName) const {
 }
 
 int32_t ResourceParser::openSourceStream(const std::string& sourceFileName) {
-  int32_t err = EXIT_SUCCESS;
-
   // open fileStream for read
   _sourceStream.open(sourceFileName.c_str(),
                      std::ifstream::in | std::ifstream::binary);
@@ -225,11 +218,10 @@ int32_t ResourceParser::openSourceStream(const std::string& sourceFileName) {
   if (!_sourceStream) {
     LOGERR("Error, could not open ifstream for fileName: %s, reason: %s",
            sourceFileName.c_str(), strerror(errno));
-
-    err = EXIT_FAILURE;
+    return EXIT_FAILURE;
   }
 
-  return err;
+  return EXIT_SUCCESS;
 }
 
 void ResourceParser::closeSourceStream() {
@@ -298,8 +290,6 @@ int32_t ResourceParser::buildResourceFile() {
 }
 
 int32_t ResourceParser::buildResFileInternalData() {
-  int32_t err = EXIT_SUCCESS;
-
   uint64_t prjPathStartIdx = 0;
   uint64_t prjPathEndIdx = 0;
 
@@ -366,7 +356,7 @@ int32_t ResourceParser::buildResFileInternalData() {
   _fileBuilder.setDestFileName(_currDestFile);
   _fileBuilder.setHeaderGuards(_currHeaderGuard);
 
-  return err;
+  return EXIT_SUCCESS;
 }
 
 int32_t ResourceParser::parseFileData() {
@@ -396,7 +386,7 @@ int32_t ResourceParser::parseFileData() {
         return EXIT_FAILURE;
       }
 
-      if (EXIT_SUCCESS != setSingleRowData(rowData, eventCode, &combinedData)) {
+      if (EXIT_SUCCESS != setSingleRowData(rowData, eventCode, combinedData)) {
         LOGERR("Error in setSingleRowData()");
         return EXIT_FAILURE;
       }
@@ -437,62 +427,57 @@ int32_t ResourceParser::parseFileData() {
 
 int32_t ResourceParser::setSingleRowData(const std::string& rowData,
                                          const int32_t eventCode,
-                                         CombinedData* outData) {
-  int32_t err = EXIT_SUCCESS;
-
+                                         CombinedData& outData) {
   switch (eventCode) {
     case ResourceDefines::Field::TAG:
       // get rid of the "[ ]" brackets
-      outData->tagName = rowData.substr(1, rowData.size() - 2);
+      outData.tagName = rowData.substr(1, rowData.size() - 2);
       break;
 
     case ResourceDefines::Field::TYPE:
-      outData->type = rowData;
+      outData.type = rowData;
       _syntaxChecker.setFieldTypeFromString(rowData);
       break;
 
     case ResourceDefines::Field::PATH:
-      err = fillPath(rowData, outData);
-      if (EXIT_SUCCESS != err) {
+      if (EXIT_SUCCESS != fillPath(rowData, outData)) {
         LOGERR("Error in fillPath()");
+        return EXIT_FAILURE;
       }
       break;
 
     case ResourceDefines::Field::DESCRIPTION:
-      err = fillDescription(rowData, outData);
-      if (EXIT_SUCCESS != err) {
+      if (EXIT_SUCCESS != fillDescription(rowData, outData)) {
         LOGERR("Error in fillDescription()");
+        return EXIT_FAILURE;
       }
       break;
 
     case ResourceDefines::Field::POSITION:
-      err = setImagePosition(rowData, outData);
-      if (EXIT_SUCCESS != err) {
+      if (EXIT_SUCCESS != setImagePosition(rowData, outData)) {
         LOGERR("Error in setImagePosition()");
+        return EXIT_FAILURE;
       }
       break;
 
     case ResourceDefines::Field::LOAD:
-      err = setTextureLoadType(rowData, outData);
-      if (EXIT_SUCCESS != err) {
+      if (EXIT_SUCCESS != setTextureLoadType(rowData, outData)) {
         LOGERR("Error in setImagePosition()");
+        return EXIT_FAILURE;
       }
       break;
 
     default:
       LOGERR("Error, invalid enum value %d", eventCode);
-
-      err = EXIT_FAILURE;
+      return EXIT_FAILURE;
       break;
   }
 
-  return err;
+  return EXIT_SUCCESS;
 }
 
 int32_t ResourceParser::fillPath(const std::string& rowData,
-                                 CombinedData* outData) {
-  int32_t err = EXIT_SUCCESS;
-
+                                 CombinedData& outData) {
   if (std::string::npos == rowData.find(EXTERNAL_PATH_PREFIX)) {
     // use local folder hierarchy
     // Example: p/images/reel.png
@@ -506,83 +491,80 @@ int32_t ResourceParser::fillPath(const std::string& rowData,
 
   if (EXIT_SUCCESS != _fileParser.openFile()) {
     LOGERR("Error in _fileParser.openFile()");
+    return EXIT_FAILURE;
+  }
 
-    err = EXIT_FAILURE;
-  } else  // EXIT_SUCCESS == err
-  {
-    outData->header.fileSize = _fileParser.getFileSizeInKiloBytes();
+  outData.header.fileSize = _fileParser.getFileSizeInKiloBytes();
 
-    if (_fileParser.isSupportedExtension()) {
-      outData->header.path = _fileParser.getAbsoluteFilePath();
+  if (_fileParser.isSupportedExtension()) {
+    outData.header.path = _fileParser.getAbsoluteFilePath();
 
-      // calculate hash value from resource string location
-      outData->header.hashValue = hashFunction(outData->header.path);
+    //file is a duplicate, this indicate error (probably copy/paster error)
+    if (_uniqueFiles.find(outData.header.path) != _uniqueFiles.end()) {
+      LOGERR("Error, found duplicate file: %s", outData.header.path.c_str());
+      LOGC("Developer hint: correct your mistake in %s and re-run "
+           "the res_builder tool", _currAbsFilePath.c_str());
+      return EXIT_FAILURE;
+    }
+    _uniqueFiles.insert(outData.header.path);
 
-      if (_fileParser.isGraphicalFile()) {
-        _fileParser.getImageDimension(&outData->imageRect.w,
-                                      &outData->imageRect.h);
-      }
+    // calculate hash value from resource string location
+    outData.header.hashValue = hashFunction(outData.header.path);
+
+    if (_fileParser.isGraphicalFile()) {
+      _fileParser.getImageDimension(outData.imageRect.w, outData.imageRect.h);
     }
   }
 
-  return err;
+  return EXIT_SUCCESS;
 }
 
 int32_t ResourceParser::fillDescription(const std::string& rowData,
-                                        CombinedData* outData) {
-  int32_t err = EXIT_SUCCESS;
-
+                                        CombinedData& outData) {
   switch (_syntaxChecker.getFieldType()) {
     case ResourceDefines::FieldType::IMAGE:
-      outData->spriteData.emplace_back(0,                      // x
-                                       0,                      // y
-                                       outData->imageRect.w,   // w
-                                       outData->imageRect.h);  // h
+      outData.spriteData.emplace_back(0,                    // x
+                                      0,                    // y
+                                      outData.imageRect.w,  // w
+                                      outData.imageRect.h); // h
       break;
 
     case ResourceDefines::FieldType::SPRITE: {
       // reserve 4 slots for description parameters
       std::vector<int32_t> spriteDescription;
-      const uint32_t SPRITE_DATA_SIZE = 4;
+      constexpr uint32_t SPRITE_DATA_SIZE = 4;
 
       if (EXIT_SUCCESS !=
           StringUtils::extractIntsFromString(rowData, " ,", &spriteDescription,
                                              SPRITE_DATA_SIZE)) {
-        LOGERR(
-            "Error in extractIntsFromString() "
-            "for data: [%s], delimiters: [ ,], maxNumbers: %d",
-            rowData.c_str(), SPRITE_DATA_SIZE);
-
-        err = EXIT_FAILURE;
+        LOGERR("Error in extractIntsFromString() "
+               "for data: [%s], delimiters: [ ,], maxNumbers: %d",
+               rowData.c_str(), SPRITE_DATA_SIZE);
+        return EXIT_FAILURE;
       }
 
-      if (EXIT_SUCCESS == err) {
-        _fileParser.setSpriteDescription(spriteDescription);
-        ResourceDefines::SpriteLayout spriteLayout =
-            ResourceDefines::SpriteLayout::UNKNOWN;
+      _fileParser.setSpriteDescription(spriteDescription);
+      ResourceDefines::SpriteLayout spriteLayout =
+          ResourceDefines::SpriteLayout::UNKNOWN;
 
-        if (_fileParser.isValidSpriteDescription(&spriteLayout)) {
-          if (EXIT_SUCCESS !=
-              _fileParser.fillSpriteData(spriteLayout, &outData->spriteData)) {
-            LOGERR("Error in _fileParser.fillSpriteData()");
+      if (!_fileParser.isValidSpriteDescription(spriteLayout)) {
+        LOGERR("Error wrong description for .rsrc file: %s, "
+               "with tag: %s",
+               _currAbsFilePath.c_str(), outData.tagName.c_str());
+        return EXIT_FAILURE;
+      }
 
-            err = EXIT_FAILURE;
-          }
-        } else {
-          LOGERR(
-              "Error wrong description for .rsrc file: %s, "
-              "with tag: %s",
-              _currAbsFilePath.c_str(), outData->tagName.c_str());
-
-          err = EXIT_FAILURE;
-        }
+      if (EXIT_SUCCESS !=
+          _fileParser.fillSpriteData(spriteLayout, outData.spriteData)) {
+        LOGERR("Error in _fileParser.fillSpriteData()");
+        return EXIT_FAILURE;
       }
     } break;
 
     case ResourceDefines::FieldType::SPRITE_MANUAL: {
       // reserve 4 slots for description parameters
       std::vector<int32_t> spriteDescription;
-      const uint32_t SPRITE_DATA_SIZE = 4;
+      constexpr uint32_t SPRITE_DATA_SIZE = 4;
 
       if (EXIT_SUCCESS !=
           StringUtils::extractIntsFromString(rowData, " ,", &spriteDescription,
@@ -591,104 +573,84 @@ int32_t ResourceParser::fillDescription(const std::string& rowData,
             "Error in extractIntsFromString() "
             "for data: [%s], delimiters: [ ,], maxNumbers: %d",
             rowData.c_str(), SPRITE_DATA_SIZE);
-
-        err = EXIT_FAILURE;
+        return EXIT_FAILURE;
       }
 
-      if (EXIT_SUCCESS == err) {
-        _fileParser.setSpriteDescription(spriteDescription);
+      _fileParser.setSpriteDescription(spriteDescription);
 
-        if (_fileParser.isValidSpriteManualDescription()) {
-          outData->spriteData.emplace_back(spriteDescription[0],   // x
-                                           spriteDescription[1],   // y
-                                           spriteDescription[2],   // w
-                                           spriteDescription[3]);  // h
-        } else {
-          LOGERR(
-              "Error wrong description for .rsrc file: %s, "
-              "with tag: %s",
-              _currAbsFilePath.c_str(), outData->tagName.c_str());
-
-          err = EXIT_FAILURE;
-        }
+      if (_fileParser.isValidSpriteManualDescription()) {
+        outData.spriteData.emplace_back(spriteDescription[0],   // x
+                                        spriteDescription[1],   // y
+                                        spriteDescription[2],   // w
+                                        spriteDescription[3]);  // h
+      } else {
+        LOGERR("Error wrong description for .rsrc file: %s, with tag: %s",
+               _currAbsFilePath.c_str(), outData.tagName.c_str());
+        return EXIT_FAILURE;
       }
     } break;
 
     case ResourceDefines::FieldType::FONT:
-      outData->fontSize = StringUtils::safeStoi(rowData);
-
+      outData.fontSize = StringUtils::safeStoi(rowData);
       ++_fontsCounter;
-      _fontFileTotalSize += outData->header.fileSize;
+      _fontFileTotalSize += outData.header.fileSize;
       break;
 
     case ResourceDefines::FieldType::SOUND: {
       std::vector<std::string> tokens;
-      const uint32_t MAX_TOKEN_SIZE = 2;
+      constexpr uint32_t MAX_TOKEN_SIZE = 2;
       StringUtils::tokenize(rowData, ", ", &tokens, MAX_TOKEN_SIZE);
 
       if (MAX_TOKEN_SIZE != tokens.size()) {
-        LOGERR(
-            "Error wrong description for .rsrc file: %s, "
-            "with tag: %s",
-            _currAbsFilePath.c_str(), outData->tagName.c_str());
-
-        err = EXIT_FAILURE;
+        LOGERR("Error wrong description for .rsrc file: %s, with tag: %s",
+               _currAbsFilePath.c_str(), outData.tagName.c_str());
+        return EXIT_FAILURE;
       }
 
-      if (EXIT_SUCCESS == err) {
-        if ("chunk" == tokens[0]) {
-          ++_chunksCounter;
-          outData->soundType = tokens[0];
-        } else if ("music" == tokens[0]) {
-          ++_musicsCounter;
-          outData->soundType = tokens[0];
-        } else {
-          LOGERR(
-              "Error wrong description for .rsrc file: %s, with "
-              "tag: %s. First argument must be 'music' or 'chunk'",
-              _currAbsFilePath.c_str(), outData->tagName.c_str());
-
-          err = EXIT_FAILURE;
-        }
+      if ("chunk" == tokens[0]) {
+        ++_chunksCounter;
+        outData.soundType = tokens[0];
+      } else if ("music" == tokens[0]) {
+        ++_musicsCounter;
+        outData.soundType = tokens[0];
+      } else {
+        LOGERR("Error wrong description for .rsrc file: %s, with "
+               "tag: %s. First argument must be 'music' or 'chunk'",
+               _currAbsFilePath.c_str(), outData.tagName.c_str());
+        return EXIT_FAILURE;
       }
 
-      if (EXIT_SUCCESS == err) {
-        if ("low" == tokens[1] || "medium" == tokens[1] ||
-            "high" == tokens[1] || "very_high" == tokens[1]) {
-          outData->soundLevel = tokens[1];
-          _soundFileTotalSize += outData->header.fileSize;
-        } else {
-          LOGERR(
-              "Error wrong description for .rsrc file: %s, with "
-              "tag: %s. Second argument 'sound level' must be "
-              "'low', 'medium', 'high' or 'very_high'",
-              _currAbsFilePath.c_str(), outData->tagName.c_str());
-
-          err = EXIT_FAILURE;
-        }
+      if ("low" == tokens[1] || "medium" == tokens[1] ||
+          "high" == tokens[1] || "very_high" == tokens[1]) {
+        outData.soundLevel = tokens[1];
+        _soundFileTotalSize += outData.header.fileSize;
+      } else {
+        LOGERR("Error wrong description for .rsrc file: %s, with "
+               "tag: %s. Second argument 'sound level' must be "
+               "'low', 'medium', 'high' or 'very_high'",
+               _currAbsFilePath.c_str(), outData.tagName.c_str());
+        return EXIT_FAILURE;
       }
     } break;
 
     default:
       LOGERR("Internal error, unknown CombinedData.type : %s",
-             outData->type.c_str());
-
-      err = EXIT_FAILURE;
-      break;
+             outData.type.c_str());
+      return EXIT_FAILURE;
   }
 
-  return err;
+  return EXIT_SUCCESS;
 }
 
 int32_t ResourceParser::setImagePosition(const std::string& rowData,
-                                         CombinedData* outData) {
+                                         CombinedData& outData) {
   std::vector<int32_t> data;
   const uint32_t DATA_SIZE = 2;
 
   if (EXIT_SUCCESS ==
       StringUtils::extractIntsFromString(rowData, " ,", &data, DATA_SIZE)) {
-    outData->imageRect.x = data[0];
-    outData->imageRect.y = data[1];
+    outData.imageRect.x = data[0];
+    outData.imageRect.y = data[1];
   } else {
     LOGERR("Error in extractIntsFromString() for data: %s, maxNumbers: %d",
            rowData.c_str(), DATA_SIZE);
@@ -699,16 +661,16 @@ int32_t ResourceParser::setImagePosition(const std::string& rowData,
 }
 
 int32_t ResourceParser::setTextureLoadType(const std::string& rowData,
-                                           CombinedData* outData) {
+                                           CombinedData& outData) {
   if ("on_init" == rowData) {
-    outData->textureLoadType = ResourceDefines::TextureLoadType::ON_INIT;
+    outData.textureLoadType = ResourceDefines::TextureLoadType::ON_INIT;
   } else if ("on_demand" == rowData) {
-    outData->textureLoadType = ResourceDefines::TextureLoadType::ON_DEMAND;
+    outData.textureLoadType = ResourceDefines::TextureLoadType::ON_DEMAND;
   } else {
     LOGERR(
         "Error wrong description for .rsrc file: %s, with tag: "
         "%s. Second argument must be 'on_init' or 'on_demand'",
-        _currAbsFilePath.c_str(), outData->tagName.c_str());
+        _currAbsFilePath.c_str(), outData.tagName.c_str());
     return EXIT_FAILURE;
   }
 

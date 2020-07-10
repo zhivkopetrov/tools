@@ -396,7 +396,7 @@ bool FileParser::isValidJpgFile() {
   if (true == success) {
     // reading JPEG dimensions requires scanning through jpeg chunks
     // we need to read the first 12 bytes of each chunk.
-    const uint8_t CHUNK_SIZE = 12;
+    constexpr uint8_t CHUNK_SIZE = 12;
     int64_t pos = 0;
     uint8_t buf[CHUNK_SIZE] = {0};
 
@@ -433,7 +433,7 @@ bool FileParser::isValidJpgFile() {
 }
 
 bool FileParser::isValidSpriteDescription(
-    ResourceDefines::SpriteLayout* outLayout) {
+    ResourceDefines::SpriteLayout& outLayout) {
   bool success = true;
   int32_t totalWidth = 0;
   int32_t totalHeight = 0;
@@ -442,14 +442,14 @@ bool FileParser::isValidSpriteDescription(
   // singleSpriteX, singleSpriteY, numberOfSprites, horizontalOffset
 
   if (nullptr == _spriteDes) {
-    *outLayout = ResourceDefines::SpriteLayout::UNKNOWN;
+    outLayout = ResourceDefines::SpriteLayout::UNKNOWN;
     LOGERR("Error, _spriteDes is not set!");
     return false;
   }
 
   if (4 != _spriteDes->size())  // sanity check
   {
-    *outLayout = ResourceDefines::SpriteLayout::UNKNOWN;
+    outLayout = ResourceDefines::SpriteLayout::UNKNOWN;
     LOGERR("Internal error. _spriteDes.->size() is not == 4!");
     return false;
   }
@@ -467,10 +467,10 @@ bool FileParser::isValidSpriteDescription(
                spriteDesRef[ResourceDefines::OFFSET_IDX];
 
   if (_imageWidth < totalWidth) {
-    *outLayout = ResourceDefines::SpriteLayout::UNKNOWN;
+    outLayout = ResourceDefines::SpriteLayout::UNKNOWN;
     success = false;
   } else {
-    *outLayout = ResourceDefines::SpriteLayout::HORIZONTAL;
+    outLayout = ResourceDefines::SpriteLayout::HORIZONTAL;
     success = true;
   }
 
@@ -488,10 +488,10 @@ bool FileParser::isValidSpriteDescription(
                   spriteDesRef[ResourceDefines::SPRITE_NUMBER_IDX];
 
     if (_imageHeight < totalHeight) {
-      *outLayout = ResourceDefines::SpriteLayout::UNKNOWN;
+      outLayout = ResourceDefines::SpriteLayout::UNKNOWN;
       success = false;
     } else {
-      *outLayout = ResourceDefines::SpriteLayout::VERTICAL;
+      outLayout = ResourceDefines::SpriteLayout::VERTICAL;
       success = true;
     }
   }
@@ -520,10 +520,10 @@ bool FileParser::isValidSpriteDescription(
 
     if (CHUNKS_PER_ROW * ROWS_PER_IMAGE <
         spriteDesRef[ResourceDefines::SPRITE_NUMBER_IDX]) {
-      *outLayout = ResourceDefines::SpriteLayout::UNKNOWN;
+      outLayout = ResourceDefines::SpriteLayout::UNKNOWN;
       success = false;
     } else {
-      *outLayout = ResourceDefines::SpriteLayout::MIXED;
+      outLayout = ResourceDefines::SpriteLayout::MIXED;
       success = true;
     }
   }
@@ -592,7 +592,7 @@ bool FileParser::isValidSpriteManualDescription() {
 }
 
 int32_t FileParser::fillSpriteData(const ResourceDefines::SpriteLayout& layout,
-                                   std::vector<Rectangle>* outData) {
+                                   std::vector<Rectangle>& outData) {
   int32_t err = EXIT_SUCCESS;
 
   switch (layout) {
@@ -618,13 +618,12 @@ int32_t FileParser::fillSpriteData(const ResourceDefines::SpriteLayout& layout,
   return err;
 }
 
-void FileParser::setHorizontalSpriteLayout(std::vector<Rectangle>* outData) {
-  std::vector<Rectangle>& outDataRef = *outData;
+void FileParser::setHorizontalSpriteLayout(std::vector<Rectangle>& outData) {
   std::vector<int32_t>& spriteDesRef = *_spriteDes;
 
   const int32_t SPRITE_COUNT = spriteDesRef[ResourceDefines::SPRITE_NUMBER_IDX];
   for (int32_t i = 0; i < SPRITE_COUNT; ++i) {
-    outDataRef.emplace_back(
+    outData.emplace_back(
         i * (spriteDesRef[ResourceDefines::WIDTH_IDX] +
              spriteDesRef[ResourceDefines::OFFSET_IDX]),  // x
         0,                                                // y
@@ -633,21 +632,19 @@ void FileParser::setHorizontalSpriteLayout(std::vector<Rectangle>* outData) {
   }
 }
 
-void FileParser::setVerticalSpriteLayout(std::vector<Rectangle>* outData) {
-  std::vector<Rectangle>& outDataRef = *outData;
+void FileParser::setVerticalSpriteLayout(std::vector<Rectangle>& outData) {
   std::vector<int32_t>& spriteDesRef = *_spriteDes;
 
   const int32_t SPRITE_COUNT = spriteDesRef[ResourceDefines::SPRITE_NUMBER_IDX];
   for (int32_t i = 0; i < SPRITE_COUNT; ++i) {
-    outDataRef.emplace_back(0,                                              // x
-                            i * spriteDesRef[ResourceDefines::HEIGHT_IDX],  // y
-                            spriteDesRef[ResourceDefines::WIDTH_IDX],       // w
-                            spriteDesRef[ResourceDefines::HEIGHT_IDX]);     // h
+    outData.emplace_back(0,                                              // x
+                         i * spriteDesRef[ResourceDefines::HEIGHT_IDX],  // y
+                         spriteDesRef[ResourceDefines::WIDTH_IDX],       // w
+                         spriteDesRef[ResourceDefines::HEIGHT_IDX]);     // h
   }
 }
 
-void FileParser::setMixedSpriteLayout(std::vector<Rectangle>* outData) {
-  std::vector<Rectangle>& outDataRef = *outData;
+void FileParser::setMixedSpriteLayout(std::vector<Rectangle>& outData) {
   std::vector<int32_t>& spriteDesRef = *_spriteDes;
 
   const int32_t CHUNK = spriteDesRef[ResourceDefines::WIDTH_IDX] +
@@ -679,7 +676,7 @@ void FileParser::setMixedSpriteLayout(std::vector<Rectangle>* outData) {
 
       ++currentChunk;
 
-      outDataRef.emplace_back(
+      outData.emplace_back(
           j * (spriteDesRef[ResourceDefines::WIDTH_IDX] +
                spriteDesRef[ResourceDefines::OFFSET_IDX]),  // x
           i * spriteDesRef[ResourceDefines::HEIGHT_IDX],    // y

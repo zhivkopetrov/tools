@@ -7,6 +7,7 @@
 #include <cstdint>
 #include <fstream>
 #include <string>
+#include <unordered_set>
 
 // Other libraries headers
 
@@ -98,52 +99,52 @@ class ResourceParser {
    *  @param const std::string & - parsed row data
    *  @param const int32_t       - event code
    *              (in order to know how to manipulate the parsed row data)
-   *  @param CombinedData *      - populated structure
+   *  @param CombinedData &      - populated structure
    *
    *  @returns int32_t          - error code
    * */
   int32_t setSingleRowData(const std::string& rowData, const int32_t eventCode,
-                           CombinedData* outData);
+                           CombinedData& outData);
 
   /** @bried used fill CombinedData description when
    *                                             "path" tag is processed.
    *
    *  @param const std::string & - parsed row data
-   *  @param CombinedData *      - populated structure
+   *  @param CombinedData &      - populated structure
    *
    *  @returns int32_t           - error code
    * */
-  int32_t fillPath(const std::string& rowData, CombinedData* outData);
+  int32_t fillPath(const std::string& rowData, CombinedData& outData);
 
   /** @bried used fill CombinedData description when
    *                                      "description" tag is processed.
    *
    *  @param const std::string & - parsed row data
-   *  @param CombinedData *      - populated structure
+   *  @param CombinedData &      - populated structure
    *
    *  @returns int32_t           - error code
    * */
-  int32_t fillDescription(const std::string& rowData, CombinedData* outData);
+  int32_t fillDescription(const std::string& rowData, CombinedData& outData);
 
   /** @brief used fill CombinedData description when
    *                                         "position" tag is processed.
    *
    *  @param const std::string & - parsed row data
-   *  @param CombinedData *      - populated structure
+   *  @param CombinedData &      - populated structure
    *
    *  @returns int32_t           - error code
    * */
-  int32_t setImagePosition(const std::string& rowData, CombinedData* outData);
+  int32_t setImagePosition(const std::string& rowData, CombinedData& outData);
 
   /** @brief used fill CombinedData description when
    *                                         "load" tag is processed.
    *
    *  @param const std::string & - parsed row data
-   *  @param CombinedData *      - populated structure
+   *  @param CombinedData &      - populated structure
    *
    *  @returns int32_t           - error code
    * */
-  int32_t setTextureLoadType(const std::string& rowData, CombinedData* outData);
+  int32_t setTextureLoadType(const std::string& rowData, CombinedData& outData);
 
   void resetInternals();
 
@@ -194,6 +195,9 @@ class ResourceParser {
 
   /* A vector that holds all parsed data from an individual .rsrc file */
   std::vector<CombinedData> _fileData;
+
+  /* A sanity checker for finding duplicate files or file paths */
+  std::unordered_set<std::string> _uniqueFiles;
 };
 
 #endif /* TOOLS_RESOURCE_BUILDER_INCLUDE_RESOURCEPARSER_H_ */
