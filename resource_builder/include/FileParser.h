@@ -33,7 +33,7 @@ class FileParser {
    *
    *  @param const std::string & - project path
    * */
-  inline void setAbsoluteProjectPath(const std::string& projectPath) {
+   void setAbsoluteProjectPath(const std::string& projectPath) {
     _absoluteProjectPath = projectPath;
   }
 
@@ -41,7 +41,7 @@ class FileParser {
    *
    *  @param const std::string & - relative folder path
    * */
-  inline void setRelativeFolderPath(const std::string& folderPath) {
+   void setRelativeFolderPath(const std::string& folderPath) {
     _relativeFolderPath = folderPath;
   }
 
@@ -72,20 +72,20 @@ class FileParser {
 
   /** @brief used to reset relative folder path
    * */
-  inline void resetRelativeFolderPath() { _relativeFolderPath = "Not set"; }
+   void resetRelativeFolderPath() { _relativeFolderPath = "Not set"; }
 
   /** @brief used to obtain the value of the absolute image path
    *
    *  @returns std::string - the absolute image path
    * */
-  inline std::string getAbsoluteFilePath() const { return _absoluteFilePath; }
+   std::string getAbsoluteFilePath() const { return _absoluteFilePath; }
 
   /** @brief used to acquire access to the sprite description vector
    *                                  for the currently processed image.
    *
    *  @param std::vector<int32_t> & - reference to sprite description
    * */
-  inline void setSpriteDescription(std::vector<int32_t>& description) {
+   void setSpriteDescription(std::vector<int32_t>& description) {
     _spriteDes = &description;
   }
 
@@ -97,7 +97,7 @@ class FileParser {
    *  @param int32_t & - image width
    *  @param int32_t & - image height
    * */
-  inline void getImageDimension(int32_t& outWidth, int32_t& outHeight) {
+   void getImageDimension(int32_t& outWidth, int32_t& outHeight) {
     outWidth = _imageWidth;
     outHeight = _imageHeight;
   }
@@ -165,7 +165,7 @@ class FileParser {
    *
    *  @return bool - is graphical file or not
    * */
-  inline bool isGraphicalFile() const { return _isGraphicalFile; }
+   bool isGraphicalFile() const { return _isGraphicalFile; }
 
   /** @brief used to acquire the file size in kBytes
    *
@@ -174,7 +174,7 @@ class FileParser {
    *
    *  @return int32_t - file size in kBytes
    * */
-  inline int32_t getFileSizeInKiloBytes() const {
+   int32_t getFileSizeInKiloBytes() const {
     return static_cast<int32_t>(_fileSize / 1024);
   }
 

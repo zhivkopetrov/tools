@@ -128,7 +128,7 @@ class SyntaxChecker {
    *
    *  @param const FieldType - field type value
    * */
-  inline void setFieldType(const ResourceDefines::FieldType fieldType) {
+  void setFieldType(const ResourceDefines::FieldType fieldType) {
     _currFieldType = fieldType;
   }
 
@@ -142,13 +142,13 @@ class SyntaxChecker {
    *
    *  @returns FieldType - field type value
    * */
-  inline ResourceDefines::FieldType getFieldType() const {
+  ResourceDefines::FieldType getFieldType() const {
     return _currFieldType;
   }
 
   /** @brief used to reset image internal state
    * */
-  inline void reset() {
+  void reset() {
     _currField = ResourceDefines::Field::TAG;
     _currFieldType = ResourceDefines::FieldType::UNKNOWN;
   }
