@@ -166,14 +166,14 @@ class SyntaxChecker {
    *                                         the corresponding event code.
    *
    *  @param const std::string &   - input data (tag + tag information)
-   *  @param std::string * outData - parsed tag information
-   *  @param int32_t *             - event code (in order to check
+   *  @param std::string & outData - parsed tag information
+   *  @param int32_t &             - event code (in order to check
    *                                                 which tag was parsed)
    *
    *  @returns int32_t            - error code
    * */
-  int32_t extractRowData(const std::string& lineData, std::string* outData,
-                         int32_t* outEventCode);
+  int32_t extractRowData(const std::string& lineData, std::string& outData,
+                         int32_t& outEventCode);
 
  private:
   /** Holds currently processed filed

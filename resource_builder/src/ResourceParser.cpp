@@ -6,7 +6,6 @@
 // C++ system headers
 #include <cctype>
 #include <cerrno>
-#include <cstdlib>
 #include <cstring>
 #include <functional>  //for std::hash
 
@@ -17,6 +16,7 @@
 #include "resource_utils/common/ResourceFileHeader.h"
 #include "utils/data_type/StringUtils.h"
 #include "utils/file_system/FileSystemUtils.h"
+#include "utils/ErrorCode.h"
 #include "utils/Log.h"
 
 static std::hash<std::string> hashFunction;
@@ -41,11 +41,11 @@ int32_t ResourceParser::init(const std::string & projectPath) {
   // internal vector grow is invoked
   _fileData.reserve(200);
 
-  return EXIT_SUCCESS;
+  return SUCCESS;
 }
 
 int32_t ResourceParser::parseResourceTree() {
-  int32_t err = EXIT_SUCCESS;
+  int32_t err = SUCCESS;
   _startDir = _projectAbsFilePath;
   _projectFolder = _projectAbsFilePath;
   if (_projectFolder.back() == '/') {
@@ -57,19 +57,19 @@ int32_t ResourceParser::parseResourceTree() {
   LOG("======================================");
   LOG("Starting recursive search on %s", _startDir.c_str());
 
-  if (EXIT_SUCCESS != setupResourceTree()) {
+  if (SUCCESS != setupResourceTree()) {
     LOGERR("Error, setupResourceTree() failed");
 
-    err = EXIT_FAILURE;
+    err = FAILURE;
   }
-  if (EXIT_SUCCESS == err) {
-    if (EXIT_SUCCESS != processAllFiles()) {
+  if (SUCCESS == err) {
+    if (SUCCESS != processAllFiles()) {
       LOGERR("processAllFiles() failed");
-      err = EXIT_FAILURE;
+      err = FAILURE;
     }
   }
 
-  if (EXIT_SUCCESS == err) {
+  if (SUCCESS == err) {
     _fileBuilder.finishCombinedDestFiles(
         _staticWidgetsCounter, _dynamicWidgetsCounter, _fontsCounter,
         _musicsCounter, _chunksCounter, _staticResFileTotalSize,
@@ -143,11 +143,11 @@ int32_t ResourceParser::setupResourceTree() {
       ResourceFileHeader::getResourcesBinFolderName());
 
   if (!FileSystemUtils::isDirectoryPresent(resourcesFolder)) {
-    if (EXIT_SUCCESS !=
+    if (SUCCESS !=
         FileSystemUtils::createDirectoryRecursive(resourcesFolder)) {
       LOGERR("createDirectoryRecursive() failed for '%s'",
           resourcesFolder.c_str());
-      return EXIT_FAILURE;
+      return FAILURE;
     }
   }
 
@@ -159,13 +159,13 @@ int32_t ResourceParser::setupResourceTree() {
   const std::string soundFile =
       resourcesFolder + ResourceFileHeader::getSoundBinName();
 
-  if (EXIT_SUCCESS !=
+  if (SUCCESS !=
       _fileBuilder.openCombinedStreams(resFile, fontFile, soundFile)) {
     LOGERR("Error in _fileBuilder.openCombinedStreams()");
-    return EXIT_FAILURE;
+    return FAILURE;
   }
 
-  return EXIT_SUCCESS;
+  return SUCCESS;
 }
 
 int32_t ResourceParser::processAllFiles() {
@@ -174,9 +174,9 @@ int32_t ResourceParser::processAllFiles() {
 
   const int32_t res = FileSystemUtils::getAllFilesInDirectoryRecursively(
       _startDir, blackListFolders, files);
-  if (EXIT_FAILURE == res) {
+  if (FAILURE == res) {
     LOGERR("getAllFilesInDirectoryRecursively() failed");
-    return EXIT_FAILURE;
+    return FAILURE;
   }
 
   for (const auto& fileName : files) {
@@ -186,14 +186,14 @@ int32_t ResourceParser::processAllFiles() {
     }
     _currAbsFilePath = fileName;
 
-    if (EXIT_SUCCESS != buildResourceFile()) {
+    if (SUCCESS != buildResourceFile()) {
       LOGERR("Error in buildResourceFile() for %s.", _currAbsFilePath.c_str());
       LOGR("Cancelling parsing for next files");
-      return EXIT_FAILURE;
+      return FAILURE;
     }
   }
 
-  return EXIT_SUCCESS;
+  return SUCCESS;
 }
 
 bool ResourceParser::isResourceFile(const std::string& fileName) const {
@@ -218,10 +218,10 @@ int32_t ResourceParser::openSourceStream(const std::string& sourceFileName) {
   if (!_sourceStream) {
     LOGERR("Error, could not open ifstream for fileName: %s, reason: %s",
            sourceFileName.c_str(), strerror(errno));
-    return EXIT_FAILURE;
+    return FAILURE;
   }
 
-  return EXIT_SUCCESS;
+  return SUCCESS;
 }
 
 void ResourceParser::closeSourceStream() {
@@ -237,17 +237,17 @@ int32_t ResourceParser::buildResourceFile() {
 
   int32_t err = buildResFileInternalData();
 
-  if (EXIT_SUCCESS != err) {
+  if (SUCCESS != err) {
     LOGERR(
         "Error in buildResourceFile(), Resource file from %s "
         "could not be created",
         _currAbsFilePath.c_str());
   }
 
-  if (EXIT_SUCCESS == err) {
+  if (SUCCESS == err) {
     err = openSourceStream(_currAbsFilePath);
 
-    if (EXIT_SUCCESS != err) {
+    if (SUCCESS != err) {
       LOGERR(
           "Error in openSourceStream(), Resource file from %s "
           "could not be created",
@@ -255,23 +255,23 @@ int32_t ResourceParser::buildResourceFile() {
     }
   }
 
-  if (EXIT_SUCCESS == err) {
+  if (SUCCESS == err) {
     err = parseFileData();
 
-    if (EXIT_SUCCESS != err) {
+    if (SUCCESS != err) {
       LOGERR("Error in parseFileData() for %s", _currAbsFilePath.c_str());
     }
   }
 
-  if (EXIT_SUCCESS == err) {
+  if (SUCCESS == err) {
     err = _fileBuilder.openDestStreams();
 
-    if (EXIT_SUCCESS != err) {
+    if (SUCCESS != err) {
       LOGERR("Error in openDestStream() for %s", _currDestFile.c_str());
     }
   }
 
-  if (EXIT_SUCCESS == err) {
+  if (SUCCESS == err) {
     // whole .rsrc file is parsed -> write its data
     _fileBuilder.writeData(_fileData);
 
@@ -300,7 +300,7 @@ int32_t ResourceParser::buildResFileInternalData() {
   if (std::string::npos == dotPos) {
     LOGERR("Internal error. Resource file from %s could not be created",
         _currAbsFilePath.c_str());
-    return EXIT_FAILURE;
+    return FAILURE;
   }
   const std::string absFileName = _currAbsFilePath.substr(0, dotPos);
   //filename with no extension
@@ -311,7 +311,7 @@ int32_t ResourceParser::buildResFileInternalData() {
   if (prjPathStartIdx == std::string::npos) {
     LOGERR("Internal error. Resource file from %s could not be created",
         _currAbsFilePath.c_str());
-    return EXIT_FAILURE;
+    return FAILURE;
   }
 
   prjPathStartIdx += _projectFolder.size() + 1;
@@ -321,7 +321,7 @@ int32_t ResourceParser::buildResFileInternalData() {
   if (std::string::npos == prjPathEndIdx) {
     LOGERR("Internal error. Resource file from %s could not be created",
         _currAbsFilePath.c_str());
-    return EXIT_FAILURE;
+    return FAILURE;
   }
 
   // get project path
@@ -356,7 +356,7 @@ int32_t ResourceParser::buildResFileInternalData() {
   _fileBuilder.setDestFileName(_currDestFile);
   _fileBuilder.setHeaderGuards(_currHeaderGuard);
 
-  return EXIT_SUCCESS;
+  return SUCCESS;
 }
 
 int32_t ResourceParser::parseFileData() {
@@ -380,21 +380,21 @@ int32_t ResourceParser::parseFileData() {
     } else if (lineData[0] == '#') { // it is comment line -> skip it
       continue;
     } else if (_syntaxChecker.hasValidTag(lineData)) {
-      if (EXIT_SUCCESS !=
-          _syntaxChecker.extractRowData(lineData, &rowData, &eventCode)) {
+      if (SUCCESS !=
+          _syntaxChecker.extractRowData(lineData, rowData, eventCode)) {
         LOGERR("Error in extractRowData()");
-        return EXIT_FAILURE;
+        return FAILURE;
       }
 
-      if (EXIT_SUCCESS != setSingleRowData(rowData, eventCode, combinedData)) {
+      if (SUCCESS != setSingleRowData(rowData, eventCode, combinedData)) {
         LOGERR("Error in setSingleRowData()");
-        return EXIT_FAILURE;
+        return FAILURE;
       }
     } else {
       LOGERR(
           "Internal error occurred on line: %d. Canceling parsing for %s",
           parsedRowNumber, _currAbsFilePath.c_str());
-      return EXIT_FAILURE;
+      return FAILURE;
     }
 
     _syntaxChecker.updateOrder();
@@ -419,10 +419,10 @@ int32_t ResourceParser::parseFileData() {
 
   if (_fileData.empty()) {
     LOGERR("Configuration not complete for %s", _currAbsFilePath.c_str());
-    return EXIT_FAILURE;
+    return FAILURE;
   }
 
-  return EXIT_SUCCESS;
+  return SUCCESS;
 }
 
 int32_t ResourceParser::setSingleRowData(const std::string& rowData,
@@ -440,40 +440,40 @@ int32_t ResourceParser::setSingleRowData(const std::string& rowData,
       break;
 
     case ResourceDefines::Field::PATH:
-      if (EXIT_SUCCESS != fillPath(rowData, outData)) {
+      if (SUCCESS != fillPath(rowData, outData)) {
         LOGERR("Error in fillPath()");
-        return EXIT_FAILURE;
+        return FAILURE;
       }
       break;
 
     case ResourceDefines::Field::DESCRIPTION:
-      if (EXIT_SUCCESS != fillDescription(rowData, outData)) {
+      if (SUCCESS != fillDescription(rowData, outData)) {
         LOGERR("Error in fillDescription()");
-        return EXIT_FAILURE;
+        return FAILURE;
       }
       break;
 
     case ResourceDefines::Field::POSITION:
-      if (EXIT_SUCCESS != setImagePosition(rowData, outData)) {
+      if (SUCCESS != setImagePosition(rowData, outData)) {
         LOGERR("Error in setImagePosition()");
-        return EXIT_FAILURE;
+        return FAILURE;
       }
       break;
 
     case ResourceDefines::Field::LOAD:
-      if (EXIT_SUCCESS != setTextureLoadType(rowData, outData)) {
+      if (SUCCESS != setTextureLoadType(rowData, outData)) {
         LOGERR("Error in setImagePosition()");
-        return EXIT_FAILURE;
+        return FAILURE;
       }
       break;
 
     default:
       LOGERR("Error, invalid enum value %d", eventCode);
-      return EXIT_FAILURE;
+      return FAILURE;
       break;
   }
 
-  return EXIT_SUCCESS;
+  return SUCCESS;
 }
 
 int32_t ResourceParser::fillPath(const std::string& rowData,
@@ -489,9 +489,9 @@ int32_t ResourceParser::fillPath(const std::string& rowData,
         EXTERNAL_PATH_PREFIX_SIZE, rowData.size() - EXTERNAL_PATH_PREFIX_SIZE));
   }
 
-  if (EXIT_SUCCESS != _fileParser.openFile()) {
+  if (SUCCESS != _fileParser.openFile()) {
     LOGERR("Error in _fileParser.openFile()");
-    return EXIT_FAILURE;
+    return FAILURE;
   }
 
   outData.header.fileSize = _fileParser.getFileSizeInKiloBytes();
@@ -504,7 +504,7 @@ int32_t ResourceParser::fillPath(const std::string& rowData,
       LOGERR("Error, found duplicate file: %s", outData.header.path.c_str());
       LOGC("Developer hint: correct your mistake in %s and re-run "
            "the res_builder tool", _currAbsFilePath.c_str());
-      return EXIT_FAILURE;
+      return FAILURE;
     }
     _uniqueFiles.insert(outData.header.path);
 
@@ -516,7 +516,7 @@ int32_t ResourceParser::fillPath(const std::string& rowData,
     }
   }
 
-  return EXIT_SUCCESS;
+  return SUCCESS;
 }
 
 int32_t ResourceParser::fillDescription(const std::string& rowData,
@@ -534,13 +534,13 @@ int32_t ResourceParser::fillDescription(const std::string& rowData,
       std::vector<int32_t> spriteDescription;
       constexpr uint32_t SPRITE_DATA_SIZE = 4;
 
-      if (EXIT_SUCCESS !=
+      if (SUCCESS !=
           StringUtils::extractIntsFromString(rowData, " ,", &spriteDescription,
                                              SPRITE_DATA_SIZE)) {
         LOGERR("Error in extractIntsFromString() "
                "for data: [%s], delimiters: [ ,], maxNumbers: %d",
                rowData.c_str(), SPRITE_DATA_SIZE);
-        return EXIT_FAILURE;
+        return FAILURE;
       }
 
       _fileParser.setSpriteDescription(spriteDescription);
@@ -551,13 +551,13 @@ int32_t ResourceParser::fillDescription(const std::string& rowData,
         LOGERR("Error wrong description for .rsrc file: %s, "
                "with tag: %s",
                _currAbsFilePath.c_str(), outData.tagName.c_str());
-        return EXIT_FAILURE;
+        return FAILURE;
       }
 
-      if (EXIT_SUCCESS !=
+      if (SUCCESS !=
           _fileParser.fillSpriteData(spriteLayout, outData.spriteData)) {
         LOGERR("Error in _fileParser.fillSpriteData()");
-        return EXIT_FAILURE;
+        return FAILURE;
       }
     } break;
 
@@ -566,14 +566,14 @@ int32_t ResourceParser::fillDescription(const std::string& rowData,
       std::vector<int32_t> spriteDescription;
       constexpr uint32_t SPRITE_DATA_SIZE = 4;
 
-      if (EXIT_SUCCESS !=
+      if (SUCCESS !=
           StringUtils::extractIntsFromString(rowData, " ,", &spriteDescription,
                                              SPRITE_DATA_SIZE)) {
         LOGERR(
             "Error in extractIntsFromString() "
             "for data: [%s], delimiters: [ ,], maxNumbers: %d",
             rowData.c_str(), SPRITE_DATA_SIZE);
-        return EXIT_FAILURE;
+        return FAILURE;
       }
 
       _fileParser.setSpriteDescription(spriteDescription);
@@ -586,7 +586,7 @@ int32_t ResourceParser::fillDescription(const std::string& rowData,
       } else {
         LOGERR("Error wrong description for .rsrc file: %s, with tag: %s",
                _currAbsFilePath.c_str(), outData.tagName.c_str());
-        return EXIT_FAILURE;
+        return FAILURE;
       }
     } break;
 
@@ -604,7 +604,7 @@ int32_t ResourceParser::fillDescription(const std::string& rowData,
       if (MAX_TOKEN_SIZE != tokens.size()) {
         LOGERR("Error wrong description for .rsrc file: %s, with tag: %s",
                _currAbsFilePath.c_str(), outData.tagName.c_str());
-        return EXIT_FAILURE;
+        return FAILURE;
       }
 
       if ("chunk" == tokens[0]) {
@@ -617,7 +617,7 @@ int32_t ResourceParser::fillDescription(const std::string& rowData,
         LOGERR("Error wrong description for .rsrc file: %s, with "
                "tag: %s. First argument must be 'music' or 'chunk'",
                _currAbsFilePath.c_str(), outData.tagName.c_str());
-        return EXIT_FAILURE;
+        return FAILURE;
       }
 
       if ("low" == tokens[1] || "medium" == tokens[1] ||
@@ -629,35 +629,35 @@ int32_t ResourceParser::fillDescription(const std::string& rowData,
                "tag: %s. Second argument 'sound level' must be "
                "'low', 'medium', 'high' or 'very_high'",
                _currAbsFilePath.c_str(), outData.tagName.c_str());
-        return EXIT_FAILURE;
+        return FAILURE;
       }
     } break;
 
     default:
       LOGERR("Internal error, unknown CombinedData.type : %s",
              outData.type.c_str());
-      return EXIT_FAILURE;
+      return FAILURE;
   }
 
-  return EXIT_SUCCESS;
+  return SUCCESS;
 }
 
 int32_t ResourceParser::setImagePosition(const std::string& rowData,
                                          CombinedData& outData) {
   std::vector<int32_t> data;
-  const uint32_t DATA_SIZE = 2;
+  constexpr uint32_t DATA_SIZE = 2;
 
-  if (EXIT_SUCCESS ==
+  if (SUCCESS ==
       StringUtils::extractIntsFromString(rowData, " ,", &data, DATA_SIZE)) {
     outData.imageRect.x = data[0];
     outData.imageRect.y = data[1];
   } else {
     LOGERR("Error in extractIntsFromString() for data: %s, maxNumbers: %d",
            rowData.c_str(), DATA_SIZE);
-    return EXIT_FAILURE;
+    return FAILURE;
   }
 
-  return EXIT_SUCCESS;
+  return SUCCESS;
 }
 
 int32_t ResourceParser::setTextureLoadType(const std::string& rowData,
@@ -671,10 +671,10 @@ int32_t ResourceParser::setTextureLoadType(const std::string& rowData,
         "Error wrong description for .rsrc file: %s, with tag: "
         "%s. Second argument must be 'on_init' or 'on_demand'",
         _currAbsFilePath.c_str(), outData.tagName.c_str());
-    return EXIT_FAILURE;
+    return FAILURE;
   }
 
-  return EXIT_SUCCESS;
+  return SUCCESS;
 }
 
 void ResourceParser::resetInternals() {

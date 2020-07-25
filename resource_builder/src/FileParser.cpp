@@ -13,6 +13,7 @@
 // Own components headers
 #include "utils/data_type/EnumClassUtils.hpp"
 #include "utils/drawing/Rectangle.h"
+#include "utils/ErrorCode.h"
 #include "utils/Log.h"
 
 FileParser::FileParser()
@@ -51,20 +52,18 @@ void FileParser::setRelativeFilePath(const std::string& relativeFilePath) {
 }
 
 int32_t FileParser::openFile() {
-  int32_t err = EXIT_SUCCESS;
-
   _fileStream.open(_absoluteFilePath.c_str(),
                    std::ifstream::in | std::ifstream::binary);
 
   if (!_fileStream) {
     LOGERR("Error, could not open ifstream for fileName: %s, reason: %s",
            _absoluteFilePath.c_str(), strerror(errno));
-    err = EXIT_FAILURE;
-  } else {
-    readFileSize();
+    return FAILURE;
   }
 
-  return err;
+  readFileSize();
+
+  return SUCCESS;
 }
 
 void FileParser::closeFileAndReset() {
@@ -593,8 +592,6 @@ bool FileParser::isValidSpriteManualDescription() {
 
 int32_t FileParser::fillSpriteData(const ResourceDefines::SpriteLayout& layout,
                                    std::vector<Rectangle>& outData) {
-  int32_t err = EXIT_SUCCESS;
-
   switch (layout) {
     case ResourceDefines::SpriteLayout::HORIZONTAL:
       setHorizontalSpriteLayout(outData);
@@ -609,13 +606,12 @@ int32_t FileParser::fillSpriteData(const ResourceDefines::SpriteLayout& layout,
       break;
 
     default:
-      err = EXIT_FAILURE;
       LOGERR("Internal error, Invalid enum class value: %hhu",
              getEnumValue(layout));
-      break;
+      return FAILURE;
   }
 
-  return err;
+  return SUCCESS;
 }
 
 void FileParser::setHorizontalSpriteLayout(std::vector<Rectangle>& outData) {

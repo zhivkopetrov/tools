@@ -1,12 +1,15 @@
 // Corresponding header
 #include "SyntaxChecker.h"
 
+// C system headers
+
+// C++ system headers
 #include <cctype>
-#include <cstdlib>
 
 // Other libraries headers
 
 // Own components headers
+#include "utils/ErrorCode.h"
 #include "utils/Log.h"
 
 SyntaxChecker::SyntaxChecker()
@@ -183,10 +186,8 @@ bool SyntaxChecker::hasValidTag(const std::string& line) {
 }
 
 int32_t SyntaxChecker::extractRowData(const std::string& lineData,
-                                      std::string* outData,
-                                      int32_t* outEventCode) {
-  int32_t err = EXIT_SUCCESS;
-
+                                      std::string& outData,
+                                      int32_t& outEventCode) {
   uint64_t dataStartIndex = 0;
 
   const uint64_t LINE_DATA_SIZE = lineData.size();
@@ -194,22 +195,18 @@ int32_t SyntaxChecker::extractRowData(const std::string& lineData,
 
   if (std::string::npos == DELIMITER_POS) {
     LOGERR("Error, '=' sign could not be found");
-
-    err = EXIT_FAILURE;
+    return FAILURE;
   }
 
   if (DELIMITER_POS == LINE_DATA_SIZE) {
     LOGERR("Error, no data for current tag");
-
-    err = EXIT_FAILURE;
+    return FAILURE;
   }
 
-  if (EXIT_SUCCESS == err) {
-    for (uint64_t i = DELIMITER_POS + 1; i < LINE_DATA_SIZE; ++i) {
-      if (!isblank(lineData[i])) {
-        dataStartIndex = i;
-        break;
-      }
+  for (uint64_t i = DELIMITER_POS + 1; i < LINE_DATA_SIZE; ++i) {
+    if (!isblank(lineData[i])) {
+      dataStartIndex = i;
+      break;
     }
   }
 
@@ -217,16 +214,15 @@ int32_t SyntaxChecker::extractRowData(const std::string& lineData,
   if (dataStartIndex == 0) {
     // empty information leading to crash e.g. "tag =   "
     LOGERR("Error, no data for current tag");
-
-    err = EXIT_FAILURE;
-  } else {
-    *outData = lineData.substr(dataStartIndex,                    // start pos
-                               LINE_DATA_SIZE - dataStartIndex);  // size
-
-    *outEventCode = _currField;
+    return FAILURE;
   }
 
-  return err;
+  outData = lineData.substr(dataStartIndex,                    // start pos
+                            LINE_DATA_SIZE - dataStartIndex);  // size
+
+  outEventCode = _currField;
+
+  return SUCCESS;
 }
 
 void SyntaxChecker::setFieldTypeFromString(const std::string& dataType) {
