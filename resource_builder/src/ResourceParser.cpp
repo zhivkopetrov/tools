@@ -31,11 +31,8 @@ ResourceParser::ResourceParser() : _projectAbsFilePath("Not set") {
   resetInternals();
 }
 
-int32_t ResourceParser::init(const std::string & projectPath) {
-  _projectAbsFilePath = projectPath.empty() ?
-      FileSystemUtils::getRootDirectory() : projectPath;
-
-  _fileParser.setAbsoluteProjectPath(_projectAbsFilePath);
+int32_t ResourceParser::init() {
+  _projectAbsFilePath = FileSystemUtils::getRootDirectory();
 
   // Reserve enough memory for the whole parse process, no no unneeded
   // internal vector grow is invoked
@@ -44,15 +41,12 @@ int32_t ResourceParser::init(const std::string & projectPath) {
   return SUCCESS;
 }
 
-int32_t ResourceParser::parseResourceTree() {
+int32_t ResourceParser::parseResourceTree(const std::string &projectName) {
   int32_t err = SUCCESS;
   _startDir = _projectAbsFilePath;
-  _projectFolder = _projectAbsFilePath;
-  if (_projectFolder.back() == '/') {
-    _projectFolder.pop_back();
-  }
-  _projectFolder =
-      FileSystemUtils::getFileNameFromAbsolutePath(_projectFolder);
+  _startDir.append(projectName);
+  _fileParser.setAbsoluteProjectPath(_startDir);
+  _projectFolder = FileSystemUtils::getFileNameFromAbsolutePath(_startDir);
 
   LOG("======================================");
   LOG("Starting recursive search on %s", _startDir.c_str());
@@ -74,58 +68,9 @@ int32_t ResourceParser::parseResourceTree() {
         _staticWidgetsCounter, _dynamicWidgetsCounter, _fontsCounter,
         _musicsCounter, _chunksCounter, _staticResFileTotalSize,
         _fontFileTotalSize, _soundFileTotalSize);
-
-    constexpr int32_t CONTAINERS_SIZE = 4;
-
-    const int32_t ITEMS_SIZE[CONTAINERS_SIZE]{
-        _staticResFileTotalSize, _dynamicResFileTotalSize, _fontFileTotalSize,
-        _soundFileTotalSize};
-
-    std::string itemsSizeStr[CONTAINERS_SIZE];
-
-    for (int32_t i = 0; i < CONTAINERS_SIZE; ++i) {
-      itemsSizeStr[i] =
-          std::to_string(static_cast<double>(ITEMS_SIZE[i]) / 1024);
-      const size_t DOT_POS = itemsSizeStr[i].find('.');
-
-      itemsSizeStr[i] =
-          (itemsSizeStr[i].substr(0, DOT_POS + 1 + MB_PRECISION_AFTER_DECIMAL));
-      itemsSizeStr[i].append(" MB");
-    }
-
-    LOG_ON_SAME_LINE("\nRecursive search on %s ... ", _startDir.c_str());
-    LOGG("[Done]");
-
-    LOG_ON_SAME_LINE(
-        "%s generation ... (%lu static files with size: %s "
-        "and %lu dynamic files with size: %s) ",
-        ResourceFileHeader::getResourceBinName().c_str(), _staticWidgetsCounter,
-        itemsSizeStr[0].c_str(), _dynamicWidgetsCounter,
-        itemsSizeStr[1].c_str());
-    LOGG("[Done]");
-    LOG_ON_SAME_LINE("%s generation ... (%lu static files with size: %s) ",
-                     ResourceFileHeader::getFontBinName().c_str(), _fontsCounter,
-                     itemsSizeStr[2].c_str());
-    LOGG("[Done]");
-    LOG_ON_SAME_LINE("%s generation ... (%lu static files with size: %s) ",
-                     ResourceFileHeader::getSoundBinName().c_str(),
-                     (_musicsCounter + _chunksCounter),
-                     itemsSizeStr[3].c_str());
-    LOGG("[Done]");
-  } else {
-    LOG_ON_SAME_LINE("\nRecursive search on %s ... ", _startDir.c_str());
-    LOGR("[Failed]");
-    LOG_ON_SAME_LINE("%s generation ... ",
-                     ResourceFileHeader::getResourceBinName().c_str());
-    LOGR("[Failed]");
-    LOG_ON_SAME_LINE("%s generation ... ",
-                     ResourceFileHeader::getFontBinName().c_str());
-    LOGR("[Failed]");
-    LOG_ON_SAME_LINE("%s generation ... ",
-                     ResourceFileHeader::getSoundBinName().c_str());
-    LOGR("[Failed]");
   }
-  LOG("=======================================");
+
+  finishParseResourceTreeLogReport(err);
 
   // reset internal variables on both success and failure
   resetInternals();
@@ -290,8 +235,8 @@ int32_t ResourceParser::buildResourceFile() {
 }
 
 int32_t ResourceParser::buildResFileInternalData() {
-  uint64_t prjPathStartIdx = 0;
-  uint64_t prjPathEndIdx = 0;
+  uint64_t relativePrjPathStartIdx = 0;
+  uint64_t relativePrjPathEndIdx = 0;
 
   // locate dot index so we can substring the instance name
   const uint64_t dotPos = _currAbsFilePath.find(".");
@@ -307,42 +252,40 @@ int32_t ResourceParser::buildResFileInternalData() {
   const std::string fileName =
       FileSystemUtils::getFileNameFromAbsolutePath(absFileName);
 
-  prjPathStartIdx = _currAbsFilePath.find(_projectFolder);
-  if (prjPathStartIdx == std::string::npos) {
+  relativePrjPathStartIdx = _currAbsFilePath.find(_projectFolder);
+  if (relativePrjPathStartIdx == std::string::npos) {
     LOGERR("Internal error. Resource file from %s could not be created",
         _currAbsFilePath.c_str());
     return FAILURE;
   }
 
-  prjPathStartIdx += _projectFolder.size() + 1;
+  relativePrjPathStartIdx += _projectFolder.size() + 1;
 
-  prjPathEndIdx = _currAbsFilePath.find(fileName);
+  relativePrjPathEndIdx = _currAbsFilePath.find(fileName);
 
-  if (std::string::npos == prjPathEndIdx) {
+  if (std::string::npos == relativePrjPathStartIdx) {
     LOGERR("Internal error. Resource file from %s could not be created",
         _currAbsFilePath.c_str());
     return FAILURE;
   }
 
   // get project path
-  const std::string PROJECT_PATH =
-      _currAbsFilePath.substr(prjPathStartIdx,  // start index
-                              prjPathEndIdx - prjPathStartIdx);  // size
+  const std::string relativeProjectPath =
+      _currAbsFilePath.substr(relativePrjPathStartIdx,  // start index
+      relativePrjPathEndIdx - relativePrjPathStartIdx); // size
 
   // remember relative folder path before we append *game*_resources_h_
-  _fileParser.setRelativeFolderPath(PROJECT_PATH);
+  _fileParser.setRelativeFolderPath(relativeProjectPath);
 
-  _currHeaderGuard = PROJECT_PATH;
+  _currHeaderGuard = relativeProjectPath;
   _currHeaderGuard.append(absFileName);
   _currHeaderGuard.append("RESOURCES_H_");
 
-  const uint64_t headerGuardSize = _currHeaderGuard.size();
-  for (uint64_t i = 0; i < headerGuardSize; ++i) {
-    if (isalpha(_currHeaderGuard[i])) {
-      _currHeaderGuard[i] =
-          static_cast<char>(std::toupper(_currHeaderGuard[i]));
-    } else if (_currHeaderGuard[i] == '/') {
-      _currHeaderGuard[i] = '_';
+  for (auto & letter : _currHeaderGuard) {
+    if (isalpha(letter)) {
+      letter = static_cast<char>(std::toupper(letter));
+    } else if (letter == '/') {
+      letter = '_';
     }
   }
 
@@ -695,4 +638,58 @@ void ResourceParser::resetInternals() {
 
   _syntaxChecker.reset();
   _fileData.clear();
+}
+
+void ResourceParser::finishParseResourceTreeLogReport(const int32_t errorCode) {
+if (SUCCESS == errorCode) {
+    constexpr int32_t CONTAINERS_SIZE = 4;
+    const int32_t ITEMS_SIZE[CONTAINERS_SIZE]{
+        _staticResFileTotalSize, _dynamicResFileTotalSize, _fontFileTotalSize,
+        _soundFileTotalSize};
+
+    std::string itemsSizeStr[CONTAINERS_SIZE];
+
+    for (int32_t i = 0; i < CONTAINERS_SIZE; ++i) {
+      itemsSizeStr[i] =
+          std::to_string(static_cast<double>(ITEMS_SIZE[i]) / 1024);
+      const size_t DOT_POS = itemsSizeStr[i].find('.');
+
+      itemsSizeStr[i] =
+          (itemsSizeStr[i].substr(0, DOT_POS + 1 + MB_PRECISION_AFTER_DECIMAL));
+      itemsSizeStr[i].append(" MB");
+    }
+
+    LOG_ON_SAME_LINE("\nRecursive search on %s ... ", _startDir.c_str());
+    LOGG("[Done]");
+
+    LOG_ON_SAME_LINE(
+        "%s generation ... (%lu static files with size: %s "
+        "and %lu dynamic files with size: %s) ",
+        ResourceFileHeader::getResourceBinName().c_str(), _staticWidgetsCounter,
+        itemsSizeStr[0].c_str(), _dynamicWidgetsCounter,
+        itemsSizeStr[1].c_str());
+    LOGG("[Done]");
+    LOG_ON_SAME_LINE("%s generation ... (%lu static files with size: %s) ",
+                     ResourceFileHeader::getFontBinName().c_str(), _fontsCounter,
+                     itemsSizeStr[2].c_str());
+    LOGG("[Done]");
+    LOG_ON_SAME_LINE("%s generation ... (%lu static files with size: %s) ",
+                     ResourceFileHeader::getSoundBinName().c_str(),
+                     (_musicsCounter + _chunksCounter),
+                     itemsSizeStr[3].c_str());
+    LOGG("[Done]");
+  } else {
+    LOG_ON_SAME_LINE("\nRecursive search on %s ... ", _startDir.c_str());
+    LOGR("[Failed]");
+    LOG_ON_SAME_LINE("%s generation ... ",
+                     ResourceFileHeader::getResourceBinName().c_str());
+    LOGR("[Failed]");
+    LOG_ON_SAME_LINE("%s generation ... ",
+                     ResourceFileHeader::getFontBinName().c_str());
+    LOGR("[Failed]");
+    LOG_ON_SAME_LINE("%s generation ... ",
+                     ResourceFileHeader::getSoundBinName().c_str());
+    LOGR("[Failed]");
+  }
+  LOG("=======================================");
 }

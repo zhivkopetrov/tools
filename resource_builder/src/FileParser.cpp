@@ -125,7 +125,13 @@ bool FileParser::isSupportedExtension() {
 
 void FileParser::buildAbsoluteFilePath() {
   _absoluteFilePath = _absoluteProjectPath;
+  if (!_absoluteFilePath.empty() && _absoluteFilePath.back() != '/') {
+    _absoluteFilePath.push_back('/');
+  }
   _absoluteFilePath.append(_relativeFolderPath);
+  if (!_relativeFolderPath.empty() && _relativeFolderPath.back() != '/') {
+    _relativeFolderPath.push_back('/');
+  }
   _absoluteFilePath.append(_relativeFilePath);
 
   setFileTypeInternal();

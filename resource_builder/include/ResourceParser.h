@@ -28,20 +28,18 @@ class ResourceParser {
    *              > setting engine resource file and font font names;
    *              > open streams for those files;
    *
-   *  @param const std::string & - project path to parse
-   *
    *  @returns int32_t - error code
    * */
-  int32_t init(const std::string & projectPath);
+  int32_t init();
 
   /** @brief used to parse project tree directory recursively, search
    *                                      for .rsrc files and parse them.
    *
-
+   *  @param const std::string & - project to parse
    *
    *  @returns int32_t - error code
    * */
-  int32_t parseResourceTree();
+  int32_t parseResourceTree(const std::string &projectName);
 
  private:
   /** @brief used to setup project tree directory for parsing.
@@ -147,6 +145,8 @@ class ResourceParser {
   int32_t setTextureLoadType(const std::string& rowData, CombinedData& outData);
 
   void resetInternals();
+
+  void finishParseResourceTreeLogReport(const int32_t errorCode);
 
   /** Temporary variables used to remember certain
    *                                   file states (names, paths, etc).
