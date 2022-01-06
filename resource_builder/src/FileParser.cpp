@@ -11,7 +11,7 @@
 // Other libraries headers
 
 // Own components headers
-#include "utils/data_type/EnumClassUtils.hpp"
+#include "utils/data_type/EnumClassUtils.h"
 #include "utils/drawing/Rectangle.h"
 #include "utils/ErrorCode.h"
 #include "utils/Log.h"
