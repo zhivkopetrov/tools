@@ -28,7 +28,7 @@ set_target_visibility(${PROJECT_NAME})
 target_include_directories(
     ${PROJECT_NAME}
     PRIVATE
-        ${_INCLUDE_DIR}
+        ${_INC_DIR}
 )
 
 target_link_libraries(
