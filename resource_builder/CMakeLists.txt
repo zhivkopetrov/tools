@@ -21,7 +21,7 @@ add_executable(
         ${_SRC_DIR}/SyntaxChecker.cpp
 )
 
-set_target_cpp_standard(${PROJECT_NAME} 17)
+set_target_cpp_standard(${PROJECT_NAME} 20)
 enable_target_warnings(${PROJECT_NAME})
 set_target_visibility(${PROJECT_NAME})
 
