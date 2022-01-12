@@ -10,14 +10,14 @@
 #include <functional>  //for std::hash
 
 // Other libraries headers
-
-// Own components headers
 #include "resource_utils/defines/ResourceDefines.h"
 #include "resource_utils/common/ResourceFileHeader.h"
 #include "utils/data_type/StringUtils.h"
 #include "utils/file_system/FileSystemUtils.h"
 #include "utils/ErrorCode.h"
 #include "utils/Log.h"
+
+// Own components headers
 
 static std::hash<std::string> hashFunction;
 

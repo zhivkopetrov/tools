@@ -9,12 +9,12 @@
 #include <cstring>
 
 // Other libraries headers
-
-// Own components headers
 #include "utils/data_type/EnumClassUtils.h"
 #include "utils/drawing/Rectangle.h"
 #include "utils/ErrorCode.h"
 #include "utils/Log.h"
+
+// Own components headers
 
 FileParser::FileParser()
     : _absoluteProjectPath("Not set"),

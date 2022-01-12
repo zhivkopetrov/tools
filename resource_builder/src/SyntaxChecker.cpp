@@ -7,10 +7,10 @@
 #include <cctype>
 
 // Other libraries headers
-
-// Own components headers
 #include "utils/ErrorCode.h"
 #include "utils/Log.h"
+
+// Own components headers
 
 SyntaxChecker::SyntaxChecker()
     : _TAG_STR("tag"),

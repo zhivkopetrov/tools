@@ -4,9 +4,12 @@
 #include <string>
 #include <vector>
 
-#include "ResourceParser.h"
+// Other libraries headers
 #include "utils/ErrorCode.h"
 #include "utils/Log.h"
+
+// Own components headers
+#include "ResourceParser.h"
 
 int32_t main(const int32_t argc, const char *args[]) {
   if (1 >= argc) {

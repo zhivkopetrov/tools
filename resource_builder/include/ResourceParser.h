@@ -10,12 +10,12 @@
 #include <unordered_set>
 
 // Other libraries headers
+#include "resource_utils/structs/CombinedStructs.h"
 
 // Own components headers
 #include "FileBuilder.h"
 #include "FileParser.h"
 #include "SyntaxChecker.h"
-#include "resource_utils/structs/CombinedStructs.h"
 
 // Forward Declarations
 

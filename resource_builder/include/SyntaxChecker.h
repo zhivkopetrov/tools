@@ -8,9 +8,9 @@
 #include <string>
 
 // Other libraries headers
+#include "resource_utils/defines/ResourceDefines.h"
 
 // Own components header
-#include "resource_utils/defines/ResourceDefines.h"
 
 // Forward declarations
 

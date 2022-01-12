@@ -9,12 +9,12 @@
 #include <iomanip>
 
 // Other libraries headers
-
-// Own components headers
 #include "resource_utils/common/ResourceFileHeader.h"
 #include "resource_utils/structs/CombinedStructs.h"
 #include "utils/ErrorCode.h"
 #include "utils/Log.h"
+
+// Own components headers
 
 namespace {
 constexpr auto MB_PRECISION_AFTER_DECIMAL = 3;

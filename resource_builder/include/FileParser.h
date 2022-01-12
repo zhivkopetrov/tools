@@ -10,9 +10,9 @@
 #include <vector>
 
 // Other libraries headers
+#include "resource_utils/defines/ResourceDefines.h"
 
 // Own components headers
-#include "resource_utils/defines/ResourceDefines.h"
 
 // Forward Declaration
 struct Rectangle;
