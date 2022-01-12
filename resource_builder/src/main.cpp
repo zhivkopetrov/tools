@@ -9,7 +9,7 @@
 #include "utils/Log.h"
 
 // Own components headers
-#include "ResourceParser.h"
+#include "resource_builder/ResourceParser.h"
 
 int32_t main(const int32_t argc, const char *args[]) {
   if (1 >= argc) {

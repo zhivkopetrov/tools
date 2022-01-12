@@ -2,9 +2,19 @@
 
 cmake_minimum_required(VERSION 3.10.2)
 
-project(resource_builder)
+project(
+    resource_builder 
+    LANGUAGES CXX
+    VERSION 1.0.0
+)
 
-set(_INC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include)
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake_helpers/find_modules)
+include(${CMAKE_CURRENT_SOURCE_DIR}/cmake_helpers/helpers.cmake)
+
+find_package(resource_utils REQUIRED)
+
+set(_INC_FOLDER_NAME include)
+set(_INC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/${_INC_FOLDER_NAME}/${PROJECT_NAME})
 set(_SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src)
    
 add_executable(
@@ -24,11 +34,14 @@ add_executable(
 set_target_cpp_standard(${PROJECT_NAME} 20)
 enable_target_warnings(${PROJECT_NAME})
 set_target_visibility(${PROJECT_NAME})
+install_and_export_target(${PROJECT_NAME} ${_INC_FOLDER_NAME})
+enable_ros_tooling_for_target(${PROJECT_NAME} ${CMAKE_CURRENT_SOURCE_DIR}/package.xml)
 
 target_include_directories(
     ${PROJECT_NAME}
     PRIVATE
-        ${_INC_DIR}
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/${_INC_FOLDER_NAME}>
+        $<INSTALL_INTERFACE:${_INC_FOLDER_NAME}>
 )
 
 target_link_libraries(

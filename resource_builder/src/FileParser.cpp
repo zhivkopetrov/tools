@@ -1,5 +1,5 @@
 // Corresponding header
-#include "FileParser.h"
+#include "resource_builder/FileParser.h"
 
 // C system headers
 #include <arpa/inet.h>

@@ -1,5 +1,5 @@
 // Corresponding header
-#include "ResourceParser.h"
+#include "resource_builder/ResourceParser.h"
 
 // C system headers
 

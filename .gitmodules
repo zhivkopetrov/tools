@@ -1,0 +1,3 @@
+[submodule "resource_builder/cmake_helpers"]
+	path = resource_builder/cmake_helpers
+	url = https://github.com/zhivkopetrov/cmake_helpers.git

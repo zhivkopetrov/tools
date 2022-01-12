@@ -1,5 +1,5 @@
 // Corresponding header
-#include "SyntaxChecker.h"
+#include "resource_builder/SyntaxChecker.h"
 
 // C system headers
 
