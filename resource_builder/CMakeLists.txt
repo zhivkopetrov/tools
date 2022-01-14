@@ -1,9 +1,9 @@
 #Author Zhivko Petrov
 
-cmake_minimum_required(VERSION 3.10.2)
+cmake_minimum_required(VERSION 3.5)
 
 project(
-    resource_builder 
+    resource_builder
     LANGUAGES CXX
     VERSION 1.0.0
 )
@@ -16,7 +16,7 @@ find_package(resource_utils REQUIRED)
 set(_INC_FOLDER_NAME include)
 set(_INC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/${_INC_FOLDER_NAME}/${PROJECT_NAME})
 set(_SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src)
-   
+
 add_executable(
     ${PROJECT_NAME} 
         ${_INC_DIR}/FileBuilder.h
@@ -31,14 +31,8 @@ add_executable(
         ${_SRC_DIR}/SyntaxChecker.cpp
 )
 
-set_target_cpp_standard(${PROJECT_NAME} 20)
-enable_target_warnings(${PROJECT_NAME})
-set_target_visibility(${PROJECT_NAME})
-install_and_export_target(${PROJECT_NAME} ${_INC_FOLDER_NAME})
-enable_ros_tooling_for_target(${PROJECT_NAME} ${CMAKE_CURRENT_SOURCE_DIR}/package.xml)
-
 target_include_directories(
-    ${PROJECT_NAME}
+    ${PROJECT_NAME} 
     PRIVATE
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/${_INC_FOLDER_NAME}>
         $<INSTALL_INTERFACE:${_INC_FOLDER_NAME}>
@@ -46,17 +40,23 @@ target_include_directories(
 
 target_link_libraries(
     ${PROJECT_NAME} 
-    PRIVATE
-        resource_utils
+    PRIVATE 
+        resource_utils::resource_utils
 )
+
+set_target_cpp_standard(${PROJECT_NAME} 20)
+enable_target_warnings(${PROJECT_NAME})
+set_target_visibility(${PROJECT_NAME})
+install_and_export_target(${PROJECT_NAME} ${_INC_FOLDER_NAME})
+
+if(NOT DISABLE_ROS_TOOLING)
+    enable_ros_tooling_for_target(${PROJECT_NAME} ${CMAKE_CURRENT_SOURCE_DIR}/package.xml)
+endif()
 
 #invoke include-what-you-use (if it's enabled) for the current project
 if(USE_IWYU)
     enable_target_include_what_you_use(${PROJECT_NAME})
 endif(USE_IWYU)
-
-
-## TODO think of a better way! Maybe export/install/import?
 
 #generate symbolic link for resourceBuilder after build is ready
 #also add the -f (--force) command in order to

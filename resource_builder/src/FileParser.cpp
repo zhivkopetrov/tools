@@ -49,6 +49,7 @@ void FileParser::setCompleteFilePathFromProject(
 void FileParser::setRelativeFilePath(const std::string& relativeFilePath) {
   _relativeFilePath = relativeFilePath;
   buildAbsoluteFilePath();
+  setFileTypeInternal();
 }
 
 int32_t FileParser::openFile() {
@@ -133,8 +134,6 @@ void FileParser::buildAbsoluteFilePath() {
     _relativeFolderPath.push_back('/');
   }
   _absoluteFilePath.append(_relativeFilePath);
-
-  setFileTypeInternal();
 }
 
 void FileParser::setFileTypeInternal() {

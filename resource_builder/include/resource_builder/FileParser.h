@@ -74,6 +74,12 @@ class FileParser {
    * */
    void resetRelativeFolderPath() { _relativeFolderPath = "Not set"; }
 
+   /** @brief used to obtain the value of the relative image path
+    *
+    *  @returns std::string - the relative image path
+    * */
+    std::string getRelativeFilePath() const { return _relativeFilePath; }
+
   /** @brief used to obtain the value of the absolute image path
    *
    *  @returns std::string - the absolute image path

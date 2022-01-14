@@ -107,12 +107,12 @@ class ResourceParser {
   /** @bried used fill CombinedData description when
    *                                             "path" tag is processed.
    *
-   *  @param const std::string & - parsed row data
+   *  @param const std::string & - relative file path
    *  @param CombinedData &      - populated structure
    *
    *  @returns int32_t           - error code
    * */
-  int32_t fillPath(const std::string& rowData, CombinedData& outData);
+  int32_t fillPath(const std::string& relativeFilePath, CombinedData& outData);
 
   /** @bried used fill CombinedData description when
    *                                      "description" tag is processed.

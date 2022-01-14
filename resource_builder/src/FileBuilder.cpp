@@ -9,6 +9,7 @@
 #include <iomanip>
 
 // Other libraries headers
+#include "resource_utils/defines/ResourceDefines.h"
 #include "resource_utils/common/ResourceFileHeader.h"
 #include "resource_utils/structs/CombinedStructs.h"
 #include "utils/ErrorCode.h"
@@ -200,57 +201,53 @@ void FileBuilder::finishCombinedDestFiles(
 }
 
 void FileBuilder::fillCombinedDestFile(const std::vector<CombinedData>& data) {
-  const uint32_t DATA_SIZE = static_cast<uint32_t>(data.size());
-
-  for (uint32_t i = 0; i < DATA_SIZE; ++i) {
-    if ("font" == data[i].type) {
+  for (const auto& entry : data) {
+    if ("font" == entry.type) {
       _combinedFontDestStream << std::hex << std::uppercase;
       _combinedFontDestStream << "0x" << std::setw(MAX_UINT64_T_HEX_LENGTH)
-                              << std::setfill('0') << data[i].header.hashValue
+                              << std::setfill('0') << entry.header.hashValue
                               << '\n';
 
       _combinedFontDestStream << std::dec << std::nouppercase;
 
-      _combinedFontDestStream << data[i].header.path << '\n'
-                              << data[i].header.fileSize << '\n'
-                              << data[i].fontSize << "\n\n";
-    } else if ("sound" == data[i].type) {
+      _combinedFontDestStream << entry.header.path << '\n'
+                              << entry.header.fileSize << '\n'
+                              << entry.fontSize << "\n\n";
+    } else if ("sound" == entry.type) {
       _combinedSoundDestStream << std::hex << std::uppercase;
       _combinedSoundDestStream << "0x" << std::setw(MAX_UINT64_T_HEX_LENGTH)
-                               << std::setfill('0') << data[i].header.hashValue
+                               << std::setfill('0') << entry.header.hashValue
                                << '\n';
 
       _combinedSoundDestStream << std::dec << std::nouppercase;
 
-      _combinedSoundDestStream << data[i].header.path << '\n'
-                               << data[i].header.fileSize << '\n'
-                               << data[i].soundType << '\n'
-                               << data[i].soundLevel << "\n\n";
-    } else  //"image"         == data[i].type ||
-            //"sprite"        == data[i].type ||
-            //"sprite_manual" == data[i].type
+      _combinedSoundDestStream << entry.header.path << '\n'
+                               << entry.header.fileSize << '\n'
+                               << entry.soundType << '\n'
+                               << entry.soundLevel << "\n\n";
+    } else  //"image"         == entry.type ||
+            //"sprite"        == entry.type ||
+            //"sprite_manual" == entry.type
     {
       _combinedResDestStream << std::hex << std::uppercase;
       _combinedResDestStream << "0x" << std::setw(MAX_UINT64_T_HEX_LENGTH)
-                             << std::setfill('0') << data[i].header.hashValue
+                             << std::setfill('0') << entry.header.hashValue
                              << '\n';
       _combinedResDestStream << std::dec << std::nouppercase;
 
       _combinedResDestStream
-          << data[i].header.path << '\n'
-          << data[i].header.fileSize << '\n'
-          << data[i].textureLoadType << '\n'
-          << data[i].imageRect.x << ' ' << data[i].imageRect.y << ' '
-          << data[i].imageRect.w << ' ' << data[i].imageRect.h << '\n';
+          << entry.header.path << '\n'
+          << entry.header.fileSize << '\n'
+          << entry.textureLoadType << '\n'
+          << entry.imageRect.x << ' ' << entry.imageRect.y << ' '
+          << entry.imageRect.w << ' ' << entry.imageRect.h << '\n';
 
-      const uint32_t SPRITE_SIZE =
-          static_cast<uint32_t>(data[i].spriteData.size());
-      _combinedResDestStream << SPRITE_SIZE << '\n';
+      _combinedResDestStream << entry.spriteData.size() << '\n';
 
-      for (uint32_t j = 0; j < SPRITE_SIZE; ++j) {
+      for (const auto& sprite : entry.spriteData) {
         _combinedResDestStream
-            << data[i].spriteData[j].x << ' ' << data[i].spriteData[j].y << ' '
-            << data[i].spriteData[j].w << ' ' << data[i].spriteData[j].h
+            << sprite.x << ' ' << sprite.y << ' '
+            << sprite.w << ' ' << sprite.h
             << '\n';
       }
       _combinedResDestStream << '\n';
@@ -301,11 +298,12 @@ void FileBuilder::autoGenerateResFile(const std::vector<CombinedData>& data) {
     hexHashValue << std::setw(MAX_UINT64_T_HEX_LENGTH) << std::setfill('0')
                  << dataEntry.header.hashValue;
 
-    if (0 == dataEntry.textureLoadType)  // textureLoadType::on_init
+    if (ResourceDefines::TextureLoadType::ON_INIT ==
+        dataEntry.textureLoadType)
     {
       _destStreamStatic << TAB << TAB << dataEntry.tagName << " = "
                         << "0x" << hexHashValue.str() << ",\n";
-    } else  // textureLoadType::on_demand
+    } else // ResourceDefines::TextureLoadType::ON_DEMAND
     {
       _destStreamDynamic << TAB << TAB << dataEntry.tagName << " = "
                          << "0x" << hexHashValue.str() << ",\n";
