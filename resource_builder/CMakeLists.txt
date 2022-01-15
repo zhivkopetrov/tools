@@ -47,7 +47,7 @@ target_link_libraries(
 set_target_cpp_standard(${PROJECT_NAME} 20)
 enable_target_warnings(${PROJECT_NAME})
 set_target_visibility(${PROJECT_NAME})
-install_and_export_target(${PROJECT_NAME} ${_INC_FOLDER_NAME})
+#install_and_export_target(${PROJECT_NAME} ${_INC_FOLDER_NAME})
 
 if(NOT DISABLE_ROS_TOOLING)
     enable_ros_tooling_for_target(${PROJECT_NAME} ${CMAKE_CURRENT_SOURCE_DIR}/package.xml)
