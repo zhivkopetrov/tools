@@ -10,5 +10,10 @@ endif()
 
 # This is for catkin compatibility.
 set(resource_builder_LIBRARIES resource_builder::resource_builder)
-get_target_property(resource_builder_INCLUDE_DIRS resource_builder::resource_builder INTERFACE_INCLUDE_DIRECTORIES)
+
+get_target_property(
+    resource_builder_INCLUDE_DIRS
+    resource_builder::resource_builder
+    INTERFACE_INCLUDE_DIRECTORIES
+)
 
