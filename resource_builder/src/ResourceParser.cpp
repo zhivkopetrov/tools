@@ -42,7 +42,6 @@ int32_t ResourceParser::init() {
 }
 
 int32_t ResourceParser::parseResourceTree(const std::string &projectName) {
-  int32_t err = SUCCESS;
   _startDir = _projectAbsFilePath;
   _startDir.append(projectName);
   _fileParser.setAbsoluteProjectPath(_startDir);
@@ -51,11 +50,17 @@ int32_t ResourceParser::parseResourceTree(const std::string &projectName) {
   LOG("======================================");
   LOG("Starting recursive search on %s", _startDir.c_str());
 
+  if (!FileSystemUtils::isDirectoryPresent(_startDir)) {
+    LOGERR("Directory not present: [%s]", _startDir.c_str());
+    return FAILURE; //break early
+  }
+
+  int32_t err = SUCCESS;
   if (SUCCESS != setupResourceTree()) {
     LOGERR("Error, setupResourceTree() failed");
-
     err = FAILURE;
   }
+
   if (SUCCESS == err) {
     if (SUCCESS != processAllFiles()) {
       LOGERR("processAllFiles() failed");
