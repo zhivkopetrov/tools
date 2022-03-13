@@ -1,8 +1,7 @@
-// C system headers
-
-// C++ system headers
+// System headers
 #include <string>
 #include <vector>
+#include <cstdlib>
 
 // Other libraries headers
 #include "utils/ErrorCode.h"
@@ -15,7 +14,7 @@ int32_t main(const int32_t argc, const char *args[]) {
   if (1 >= argc) {
     LOGERR("Resource Builder tool expects a list a project folder names within "
         "the root project folder to parse");
-    return FAILURE;
+    return EXIT_FAILURE;
   }
 
   const std::vector<std::string> supportedProjects = [argc, args](){
@@ -27,19 +26,19 @@ int32_t main(const int32_t argc, const char *args[]) {
   }();
 
   ResourceParser parser;
-  if (SUCCESS != parser.init()) {
-    return FAILURE;
+  if (ErrorCode::SUCCESS != parser.init()) {
+    return EXIT_FAILURE;
   }
 
   for (const auto & project : supportedProjects) {
-    if (SUCCESS != parser.parseResourceTree(project)) {
+    if (ErrorCode::SUCCESS != parser.parseResourceTree(project)) {
       LOGERR("Error in parser.parseResourceTree() for project: %s",
           project.c_str());
       LOGC("Developer hint: Resolve your errors in the failed .rsrc "
            "files and rerun the resource_builder tool");
-      return FAILURE;
+      return EXIT_FAILURE;
     }
   }
 
-  return SUCCESS;
+  return EXIT_SUCCESS;
 }

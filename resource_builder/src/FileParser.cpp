@@ -1,10 +1,8 @@
 // Corresponding header
 #include "resource_builder/FileParser.h"
 
-// C system headers
+// System headers
 #include <arpa/inet.h>
-
-// C++ system headers
 #include <cerrno>
 #include <cstring>
 
@@ -36,7 +34,7 @@ FileParser::FileParser()
   _jpgHeader = {0xFF, 0xD8, 0xFF, 0xE0, 0x00, 0x00, 'J', 'F', 'I', 'F'};
 }
 
-FileParser::~FileParser() { closeFileAndReset(); }
+FileParser::~FileParser() noexcept { closeFileAndReset(); }
 
 void FileParser::setCompleteFilePathFromProject(
     const std::string& relativeFilePath) {
@@ -52,19 +50,19 @@ void FileParser::setRelativeFilePath(const std::string& relativeFilePath) {
   setFileTypeInternal();
 }
 
-int32_t FileParser::openFile() {
+ErrorCode FileParser::openFile() {
   _fileStream.open(_absoluteFilePath.c_str(),
                    std::ifstream::in | std::ifstream::binary);
 
   if (!_fileStream) {
     LOGERR("Error, could not open ifstream for fileName: %s, reason: %s",
            _absoluteFilePath.c_str(), strerror(errno));
-    return FAILURE;
+    return ErrorCode::FAILURE;
   }
 
   readFileSize();
 
-  return SUCCESS;
+  return ErrorCode::SUCCESS;
 }
 
 void FileParser::closeFileAndReset() {
@@ -595,8 +593,9 @@ bool FileParser::isValidSpriteManualDescription() {
   return success;
 }
 
-int32_t FileParser::fillSpriteData(const ResourceDefines::SpriteLayout& layout,
-                                   std::vector<Rectangle>& outData) {
+ErrorCode FileParser::fillSpriteData(
+    const ResourceDefines::SpriteLayout& layout,
+    std::vector<Rectangle>& outData) {
   switch (layout) {
     case ResourceDefines::SpriteLayout::HORIZONTAL:
       setHorizontalSpriteLayout(outData);
@@ -613,10 +612,10 @@ int32_t FileParser::fillSpriteData(const ResourceDefines::SpriteLayout& layout,
     default:
       LOGERR("Internal error, Invalid enum class value: %hhu",
              getEnumValue(layout));
-      return FAILURE;
+      return ErrorCode::FAILURE;
   }
 
-  return SUCCESS;
+  return ErrorCode::SUCCESS;
 }
 
 void FileParser::setHorizontalSpriteLayout(std::vector<Rectangle>& outData) {

@@ -1,9 +1,7 @@
 #ifndef TOOLS_RESOURCE_BUILDER_INCLUDE_FILEPARSER_H_
 #define TOOLS_RESOURCE_BUILDER_INCLUDE_FILEPARSER_H_
 
-// C system headers
-
-// C++ system headers
+// System headers
 #include <cstdint>
 #include <fstream>
 #include <string>
@@ -11,6 +9,7 @@
 
 // Other libraries headers
 #include "resource_utils/defines/ResourceDefines.h"
+#include "utils/ErrorCode.h"
 
 // Own components headers
 
@@ -20,7 +19,7 @@ struct Rectangle;
 class FileParser {
  public:
   FileParser();
-  ~FileParser();
+  ~FileParser() noexcept;
 
   /** In order to easily construct absolute file path
    *                                           the following is needed:
@@ -110,9 +109,9 @@ class FileParser {
 
   /** @brief used to open file descriptor
    *
-   *  @returns int32_t - error code
+   *  @returns ErrorCode - error code
    * */
-  int32_t openFile();
+   ErrorCode openFile();
 
   /** @brief used to close and reset the file description and
    *                                            reset internal variables.
@@ -161,10 +160,10 @@ class FileParser {
    *  @param const SpriteLayout &     - currently set SpriteLayout.
    *  @param std::vector<Rectangle> & - fully populated sprite description
    *
-   *  @returns int32_t                - error code
+   *  @returns ErrorCode              - error code
    * */
-  int32_t fillSpriteData(const ResourceDefines::SpriteLayout& layout,
-                         std::vector<Rectangle>& outData);
+  ErrorCode fillSpriteData(const ResourceDefines::SpriteLayout& layout,
+                           std::vector<Rectangle>& outData);
 
   /** @brief used to determine whether the processed file is graphical one
    *                         e.g. with extensions .jpg, .png, .gif or not

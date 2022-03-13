@@ -1,9 +1,7 @@
 #ifndef TOOLS_RESOURCE_BUILDER_INCLUDE_SYNTAXCHECKER_H_
 #define TOOLS_RESOURCE_BUILDER_INCLUDE_SYNTAXCHECKER_H_
 
-// C system headers
-
-// C++ system headers
+// System headers
 #include <cstdint>
 #include <string>
 
@@ -11,6 +9,7 @@
 #include "resource_utils/defines/ResourceDefines.h"
 
 // Own components header
+#include "utils/ErrorCode.h"
 
 // Forward declarations
 
@@ -109,7 +108,7 @@
 class SyntaxChecker {
  public:
   SyntaxChecker();
-  ~SyntaxChecker() = default;
+  ~SyntaxChecker() noexcept = default;
 
   /** @brief used to determine whether tag is valid
    *
@@ -170,10 +169,10 @@ class SyntaxChecker {
    *  @param int32_t &             - event code (in order to check
    *                                                 which tag was parsed)
    *
-   *  @returns int32_t            - error code
+   *  @returns ErrorCode           - error code
    * */
-  int32_t extractRowData(const std::string& lineData, std::string& outData,
-                         int32_t& outEventCode);
+  ErrorCode extractRowData(const std::string& lineData, std::string& outData,
+                           int32_t& outEventCode);
 
  private:
   /** Holds currently processed filed

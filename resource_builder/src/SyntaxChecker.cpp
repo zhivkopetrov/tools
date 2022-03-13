@@ -1,9 +1,7 @@
 // Corresponding header
 #include "resource_builder/SyntaxChecker.h"
 
-// C system headers
-
-// C++ system headers
+// System headers
 #include <cctype>
 
 // Other libraries headers
@@ -185,9 +183,9 @@ bool SyntaxChecker::hasValidTag(const std::string& line) {
   return success;
 }
 
-int32_t SyntaxChecker::extractRowData(const std::string& lineData,
-                                      std::string& outData,
-                                      int32_t& outEventCode) {
+ErrorCode SyntaxChecker::extractRowData(const std::string& lineData,
+                                        std::string& outData,
+                                        int32_t& outEventCode) {
   uint64_t dataStartIndex = 0;
 
   const uint64_t LINE_DATA_SIZE = lineData.size();
@@ -195,12 +193,12 @@ int32_t SyntaxChecker::extractRowData(const std::string& lineData,
 
   if (std::string::npos == DELIMITER_POS) {
     LOGERR("Error, '=' sign could not be found");
-    return FAILURE;
+    return ErrorCode::FAILURE;
   }
 
   if (DELIMITER_POS == LINE_DATA_SIZE) {
     LOGERR("Error, no data for current tag");
-    return FAILURE;
+    return ErrorCode::FAILURE;
   }
 
   for (uint64_t i = DELIMITER_POS + 1; i < LINE_DATA_SIZE; ++i) {
@@ -214,7 +212,7 @@ int32_t SyntaxChecker::extractRowData(const std::string& lineData,
   if (dataStartIndex == 0) {
     // empty information leading to crash e.g. "tag =   "
     LOGERR("Error, no data for current tag");
-    return FAILURE;
+    return ErrorCode::FAILURE;
   }
 
   outData = lineData.substr(dataStartIndex,                    // start pos
@@ -222,7 +220,7 @@ int32_t SyntaxChecker::extractRowData(const std::string& lineData,
 
   outEventCode = _currField;
 
-  return SUCCESS;
+  return ErrorCode::SUCCESS;
 }
 
 void SyntaxChecker::setFieldTypeFromString(const std::string& dataType) {

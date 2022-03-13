@@ -1,9 +1,7 @@
 // Corresponding header
 #include "resource_builder/FileBuilder.h"
 
-// C system headers
-
-// C++ system headers
+// System headers
 #include <cerrno>
 #include <cstring>
 #include <iomanip>
@@ -24,13 +22,11 @@ constexpr auto DATA_TYPE = "uint64_t";
 constexpr auto MAX_UINT64_T_HEX_LENGTH = 16;
 }
 
-FileBuilder::FileBuilder() {}
+FileBuilder::~FileBuilder() noexcept { closeCombinedStreams(); }
 
-FileBuilder::~FileBuilder() { closeCombinedStreams(); }
-
-int32_t FileBuilder::openCombinedStreams(const std::string& resFileName,
-                                         const std::string& fontFileName,
-                                         const std::string& soundFileName) {
+ErrorCode FileBuilder::openCombinedStreams(const std::string& resFileName,
+                                           const std::string& fontFileName,
+                                           const std::string& soundFileName) {
   // open fileStream for write
   _combinedResDestStream.open(resFileName.c_str(),
                               std::ofstream::out | std::ofstream::binary);
@@ -38,7 +34,7 @@ int32_t FileBuilder::openCombinedStreams(const std::string& resFileName,
   if (!_combinedResDestStream) {
     LOGERR("Error, could not open ofstream for fileName: %s, reason: %s",
         resFileName.c_str(), strerror(errno));
-    return FAILURE;
+    return ErrorCode::FAILURE;
   }
 
   _combinedResDestStream << ResourceFileHeader::getEngineResHeader()
@@ -58,7 +54,7 @@ int32_t FileBuilder::openCombinedStreams(const std::string& resFileName,
   if (!_combinedFontDestStream) {
     LOGERR("Error, could not open ofstream for fileName: %s, reason: %s",
            fontFileName.c_str(), strerror(errno));
-    return FAILURE;
+    return ErrorCode::FAILURE;
   }
 
   _combinedFontDestStream
@@ -74,7 +70,7 @@ int32_t FileBuilder::openCombinedStreams(const std::string& resFileName,
   if (!_combinedSoundDestStream) {
     LOGERR("Error, could not open ofstream for fileName: %s, reason: %s",
            soundFileName.c_str(), strerror(errno));
-    return FAILURE;
+    return ErrorCode::FAILURE;
   }
 
   _combinedSoundDestStream
@@ -85,7 +81,7 @@ int32_t FileBuilder::openCombinedStreams(const std::string& resFileName,
       << ResourceFileHeader::getEngineFileSizeHeader()
       << ResourceFileHeader::getEngineValueReservedSlot() << "\n\n";
 
-  return SUCCESS;
+  return ErrorCode::SUCCESS;
 }
 
 void FileBuilder::closeCombinedStreams() {
@@ -108,7 +104,7 @@ void FileBuilder::closeCombinedStreams() {
   _combinedSoundDestStream.clear();
 }
 
-int32_t FileBuilder::openDestStreams() {
+ErrorCode FileBuilder::openDestStreams() {
   // open _destStreamStatic for write
   _destStreamStatic.open(_destFileNameStatic.c_str(),
                          std::ofstream::out | std::ofstream::binary);
@@ -116,7 +112,7 @@ int32_t FileBuilder::openDestStreams() {
   if (!_destStreamStatic) {
     LOGERR("Error, could not open ofstream for fileName: %s, reason: %s",
            _destFileNameStatic.c_str(), strerror(errno));
-    return FAILURE;
+    return ErrorCode::FAILURE;
   }
 
   // open _destStreamDynamic for write
@@ -126,7 +122,7 @@ int32_t FileBuilder::openDestStreams() {
   if (!_destStreamDynamic) {
     LOGERR("Error, could not open ofstream for fileName: %s, reason: %s",
            _destFileNameDynamic.c_str(), strerror(errno));
-    return FAILURE;
+    return ErrorCode::FAILURE;
   }
 
   // open _destStreamDynamicValues for write
@@ -136,10 +132,10 @@ int32_t FileBuilder::openDestStreams() {
   if (!_destStreamDynamicValues) {
     LOGERR("Error, could not open ofstream for fileName: %s, reason: %s",
            _destFileNameDynamicValues.c_str(), strerror(errno));
-    return FAILURE;
+    return ErrorCode::FAILURE;
   }
 
-  return SUCCESS;
+  return ErrorCode::SUCCESS;
 }
 
 void FileBuilder::closeDestStream() {

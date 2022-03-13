@@ -1,14 +1,13 @@
 #ifndef TOOLS_RESOURCE_BUILDER_INCLUDE_FILEBUILDER_H_
 #define TOOLS_RESOURCE_BUILDER_INCLUDE_FILEBUILDER_H_
 
-// C system headers
-
-// C++ system headers
+// System headers
 #include <fstream>
 #include <string>
 #include <vector>
 
 // Other libraries headers
+#include "utils/ErrorCode.h"
 
 // Own components header
 
@@ -17,8 +16,7 @@ struct CombinedData;
 
 class FileBuilder {
  public:
-  FileBuilder();
-  virtual ~FileBuilder();
+  virtual ~FileBuilder() noexcept;
 
   /** @brief used to open combined resource file and font file streams
    *
@@ -26,17 +24,17 @@ class FileBuilder {
    *  @param const std::string & - name of the engine packed font file
    *  @param const std::string & - name of the engine packed sound file
    *
-   *  @returns int32_t - error code
+   *  @returns ErrorCode         - error code
    * */
-  int32_t openCombinedStreams(const std::string& resFileName,
+  ErrorCode openCombinedStreams(const std::string& resFileName,
                               const std::string& fontFileName,
                               const std::string& soundFileName);
 
   /** @brief used to open individual games resource header and cpp files
    *
-   *  @returns int32_t - error code
+   *  @returns ErrorCode - error code
    * */
-  int32_t openDestStreams();
+  ErrorCode openDestStreams();
 
   /** @brief used to close individual games resource header and cpp files
    * */
