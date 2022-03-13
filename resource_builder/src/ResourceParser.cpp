@@ -55,7 +55,7 @@ ErrorCode ResourceParser::parseResourceTree(const std::string &projectName) {
     return ErrorCode::FAILURE; //break early
   }
 
-  auto err = ErrorCode::SUCCESS;
+  err = ErrorCode::SUCCESS;
   if (ErrorCode::SUCCESS != setupResourceTree()) {
     LOGERR("Error, setupResourceTree() failed");
     err = ErrorCode::FAILURE;
