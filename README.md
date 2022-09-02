@@ -27,18 +27,22 @@ Example my_awesome_game.rsrc
 - takes a list of paramets - folders to the filesystem and recursively scans for *.rsrc files
 
 Example usage using out-of-source build in 'build' folder
+```
+root_folder
+   |--build
+   |--dev_battle_gui
+         |--resources
+              |--DevBattleGui.rsrc
+```
 
-root
-|--build
-|--dev_battle_gui
------|--resources
-----------|--DevBattleGui.rsrc
-
-From 'build directory':
+From 'build' directory:
+```
 ./tools/resource_builder/resource_builder dev_battle_gui
+```
 
 
 **.rsrc file description**
+
 The file should follow the following syntax
 
 ```
