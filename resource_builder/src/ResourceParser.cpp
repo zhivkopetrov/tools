@@ -242,7 +242,8 @@ ErrorCode ResourceParser::buildResFileInternalData() {
         _currAbsFilePath.c_str());
     return ErrorCode::FAILURE;
   }
-  relativePrjPathStartIdx += _projectFolder.size() + 1;
+
+  relativePrjPathStartIdx += _projectFolder.size();
 
   // locate dot index so we can substring the instance name
   const uint64_t dotPos = _currAbsFilePath.find(".");
@@ -256,7 +257,7 @@ ErrorCode ResourceParser::buildResFileInternalData() {
   const std::string fileNameNoExtension =
       FileSystemUtils::getFileNameFromAbsolutePath(absFileName);
   relativePrjPathEndIdx = _currAbsFilePath.find(fileNameNoExtension);
-  if (std::string::npos == relativePrjPathStartIdx) {
+  if (std::string::npos == relativePrjPathEndIdx) {
     LOGERR("Internal error. Resource file from %s could not be created",
         _currAbsFilePath.c_str());
     return ErrorCode::FAILURE;
@@ -272,6 +273,10 @@ ErrorCode ResourceParser::buildResFileInternalData() {
 
   const std::string absResourceFolderPath = _currAbsFilePath.substr(0,
       slashPos + 1);
+
+  if ('/' != _projectFolder.back()) {
+    ++relativePrjPathStartIdx;
+  }
 
   // get project path
   const std::string relativeProjectPath = _currAbsFilePath.substr(
