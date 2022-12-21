@@ -17,7 +17,8 @@ The assets:
 
 The tools library is optimized for fast compilation.
 
-**Tool Usage**
+
+**Usage**
 The tool:
 - relies on description file (ending in *.rsrc extension)
 Example my_awesome_game.rsrc
@@ -49,22 +50,24 @@ The file should follow the following syntax
 tag=[<asset name/ID here>]
 type=<tag type> #image, sprite, sprite_manual, font, sound 
 path=<relative path to file from .rsrc file>
-description=<additional description based on the asset type
+description=<additional description based on the asset type>
 position=<initial position on screen where 0,0 is top left on the scrreen>
 load=<load the asset on system startup or just load it's definition and let it be loaded at runtime> #on_init, on_demannd
 ```
 
-Image example:
+**Image example**
+
 ```
 tag=[TILE_SURFACE]
-type=sprite
+type=image
 path=images/map.png
 description=empty #field not used on images
 position=0,0
 load=on_init
 ```
 
-Sprite example:
+**Sprite example**
+
 ```
 tag=[TILE_SURFACE]
 type=sprite
@@ -75,12 +78,13 @@ load=on_demand
 ```
 
 Note: 
-The description param automatically produces equal destiantion frames from the provided source image
+The description param automatically produces equal destination frames from the provided source image.
 It also, automatically detects horizontal, vertical or mixed sprite layout.
 FrameSpacing (if any) is applied based on the source layout.
 The descrition population will fail if bigger dimensions that what the source image provides are given.
 
-Sprite Manual example:
+**Sprite Manual example**
+
 ```
 tag=[PARTIAL_SURFACE]
 type=sprite_manual
@@ -96,7 +100,7 @@ Note:
 Any number of description can be used on this mode.
 This is perfect for texture atlasses, where assets from different sources are combined in one big texture.
 
-Font example:
+**Font example**
 ```
 tag=[MY_AWESOME_FONT]
 type=font
@@ -107,13 +111,15 @@ description=15 #font size
 Note: 
 Fonts are always loaded on initialiazition.
 
-Sound:
+**Sound**
+
 Two sound types are supported: 'chunk' and 'music'
 The music files will be streamed, while chunks are fully loaded.
 Four sound volume levels are supported: 'low', 'medium', 'high', 'very_high'
 Sounds are always loaded on initialiazition.
 
-Sound example:
+**Sound example**
+
 ```
 tag=[MY_AWESOME_SOUNDTRACK]
 type=sound
@@ -127,6 +133,7 @@ description=chunk, medium
 ```
 
 **Usage from plain CMake or ROS(catkin) / ROS2(colcon) meta-build systems**
+
 - clone the repository in your file system
 - Example usage projects: 
 https://github.com/zhivkopetrov/dev_battle.git
