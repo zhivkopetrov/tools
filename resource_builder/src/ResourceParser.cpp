@@ -3,8 +3,6 @@
 
 // System headers
 #include <cctype>
-#include <cerrno>
-#include <cstring>
 #include <functional>  //for std::hash
 
 // Other libraries headers
@@ -12,6 +10,7 @@
 #include "resource_utils/common/ResourceFileHeader.h"
 #include "utils/data_type/StringUtils.h"
 #include "utils/file_system/FileSystemUtils.h"
+#include "utils/debug/StrError.h"
 #include "utils/ErrorCode.h"
 #include "utils/Log.h"
 
@@ -164,7 +163,7 @@ ErrorCode ResourceParser::openSourceStream(const std::string &sourceFileName) {
 
   if (!_sourceStream) {
     LOGERR("Error, could not open ifstream for fileName: %s, reason: %s",
-        sourceFileName.c_str(), strerror(errno));
+        sourceFileName.c_str(), strError().c_str());
     return ErrorCode::FAILURE;
   }
 
@@ -677,17 +676,17 @@ void ResourceParser::finishParseResourceTreeLogReport(
     LOG_ON_SAME_LINE("\nRecursive search on %s ... ", _startDir.c_str());
     LOGG("[Done]");
 
-    LOG_ON_SAME_LINE("%s generation ... (%lu static files with size: %s "
-        "and %lu dynamic files with size: %s) ",
+    LOG_ON_SAME_LINE("%s generation ... (%zu static files with size: %s "
+        "and %zu dynamic files with size: %s) ",
         ResourceFileHeader::getResourceBinName().c_str(), _staticWidgetsCounter,
         itemsSizeStr[0].c_str(), _dynamicWidgetsCounter,
         itemsSizeStr[1].c_str());
     LOGG("[Done]");
-    LOG_ON_SAME_LINE("%s generation ... (%lu static files with size: %s) ",
+    LOG_ON_SAME_LINE("%s generation ... (%zu static files with size: %s) ",
         ResourceFileHeader::getFontBinName().c_str(), _fontsCounter,
         itemsSizeStr[2].c_str());
     LOGG("[Done]");
-    LOG_ON_SAME_LINE("%s generation ... (%lu static files with size: %s) ",
+    LOG_ON_SAME_LINE("%s generation ... (%zu static files with size: %s) ",
         ResourceFileHeader::getSoundBinName().c_str(),
         (_musicsCounter + _chunksCounter), itemsSizeStr[3].c_str());
     LOGG("[Done]");

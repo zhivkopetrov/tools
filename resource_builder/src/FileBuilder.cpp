@@ -2,14 +2,14 @@
 #include "resource_builder/FileBuilder.h"
 
 // System headers
-#include <cerrno>
-#include <cstring>
+#include <sstream>
 #include <iomanip>
 
 // Other libraries headers
 #include "resource_utils/defines/ResourceDefines.h"
 #include "resource_utils/common/ResourceFileHeader.h"
 #include "resource_utils/structs/CombinedStructs.h"
+#include "utils/debug/StrError.h"
 #include "utils/ErrorCode.h"
 #include "utils/Log.h"
 
@@ -33,7 +33,7 @@ ErrorCode FileBuilder::openCombinedStreams(const std::string& resFileName,
 
   if (!_combinedResDestStream) {
     LOGERR("Error, could not open ofstream for fileName: %s, reason: %s",
-        resFileName.c_str(), strerror(errno));
+        resFileName.c_str(), strError().c_str());
     return ErrorCode::FAILURE;
   }
 
@@ -53,7 +53,7 @@ ErrorCode FileBuilder::openCombinedStreams(const std::string& resFileName,
 
   if (!_combinedFontDestStream) {
     LOGERR("Error, could not open ofstream for fileName: %s, reason: %s",
-           fontFileName.c_str(), strerror(errno));
+           fontFileName.c_str(), strError().c_str());
     return ErrorCode::FAILURE;
   }
 
@@ -69,7 +69,7 @@ ErrorCode FileBuilder::openCombinedStreams(const std::string& resFileName,
 
   if (!_combinedSoundDestStream) {
     LOGERR("Error, could not open ofstream for fileName: %s, reason: %s",
-           soundFileName.c_str(), strerror(errno));
+           soundFileName.c_str(), strError().c_str());
     return ErrorCode::FAILURE;
   }
 
@@ -111,7 +111,7 @@ ErrorCode FileBuilder::openDestStreams() {
 
   if (!_destStreamStatic) {
     LOGERR("Error, could not open ofstream for fileName: %s, reason: %s",
-           _destFileNameStatic.c_str(), strerror(errno));
+           _destFileNameStatic.c_str(), strError().c_str());
     return ErrorCode::FAILURE;
   }
 
@@ -121,7 +121,7 @@ ErrorCode FileBuilder::openDestStreams() {
 
   if (!_destStreamDynamic) {
     LOGERR("Error, could not open ofstream for fileName: %s, reason: %s",
-           _destFileNameDynamic.c_str(), strerror(errno));
+           _destFileNameDynamic.c_str(), strError().c_str());
     return ErrorCode::FAILURE;
   }
 
@@ -131,7 +131,7 @@ ErrorCode FileBuilder::openDestStreams() {
 
   if (!_destStreamDynamicValues) {
     LOGERR("Error, could not open ofstream for fileName: %s, reason: %s",
-           _destFileNameDynamicValues.c_str(), strerror(errno));
+           _destFileNameDynamicValues.c_str(), strError().c_str());
     return ErrorCode::FAILURE;
   }
 
