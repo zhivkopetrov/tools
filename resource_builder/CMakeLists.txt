@@ -42,6 +42,15 @@ target_link_libraries(
         resource_utils::resource_utils
 )
 
+# link agains windows sockets API for ntoh/hton family functions
+if (WIN32)
+    target_link_libraries(
+        ${PROJECT_NAME} 
+        PRIVATE 
+            wsock32
+    )
+endif()
+
 if(NOT DISABLE_ROS_TOOLING)
     # Ament uses non-monolith build (separate build and install steps).
     # The helpers.cmake has to be included manually.

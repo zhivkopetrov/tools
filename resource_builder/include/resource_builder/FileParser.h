@@ -9,12 +9,12 @@
 
 // Other libraries headers
 #include "resource_utils/defines/ResourceDefines.h"
+#include "utils/drawing/Rectangle.h"
 #include "utils/ErrorCode.h"
 
 // Own components headers
 
 // Forward Declaration
-struct Rectangle;
 
 class FileParser {
  public:
@@ -163,7 +163,7 @@ class FileParser {
    *  @returns ErrorCode              - error code
    * */
   ErrorCode fillSpriteData(const ResourceDefines::SpriteLayout& layout,
-                           std::vector<Rectangle>& outData);
+                           std::vector<struct Rectangle>& outData);
 
   /** @brief used to determine whether the processed file is graphical one
    *                         e.g. with extensions .jpg, .png, .gif or not
@@ -221,21 +221,21 @@ class FileParser {
    *  @param std::vector<Rectangle>& outData - fully populated sprite
    *                                                          description
    * */
-  void setHorizontalSpriteLayout(std::vector<Rectangle>& outData);
+  void setHorizontalSpriteLayout(std::vector<struct Rectangle>& outData);
 
   /** @brief used to fill sprite description as vertical layout
    *
    *  @param std::vector<Rectangle> & outData - fully populated sprite
    *                                                          description
    * */
-  void setVerticalSpriteLayout(std::vector<Rectangle>& outData);
+  void setVerticalSpriteLayout(std::vector<struct Rectangle>& outData);
 
   /** @brief used to fill sprite description as mixed layout
    *
    *  @param std::vector<Rectangle> & outData - fully populated sprite
    *                                                          description
    * */
-  void setMixedSpriteLayout(std::vector<Rectangle>& outData);
+  void setMixedSpriteLayout(std::vector<struct Rectangle>& outData);
 
   /** @brief used to read the file size
    * */

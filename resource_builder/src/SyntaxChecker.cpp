@@ -218,6 +218,11 @@ ErrorCode SyntaxChecker::extractRowData(const std::string& lineData,
   outData = lineData.substr(dataStartIndex,                    // start pos
                             LINE_DATA_SIZE - dataStartIndex);  // size
 
+  const char backChar = outData.back();
+  if ('\n' == backChar || '\r' == backChar) {
+    outData.pop_back(); //handle windows not popping newline from getline
+  }
+
   outEventCode = _currField;
 
   return ErrorCode::SUCCESS;
@@ -237,7 +242,8 @@ void SyntaxChecker::setFieldTypeFromString(const std::string& dataType) {
   } else {
     _currFieldType = ResourceDefines::FieldType::UNKNOWN;
 
-    LOGERR("Internal error, _currFieldType = FieldType::UNKNOWN");
+    LOGERR("Internal error, _currFieldType = FieldType::UNKNOWN for dataType: %s",
+           dataType.c_str());
   }
 }
 

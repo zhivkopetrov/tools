@@ -2,17 +2,26 @@
 #include "resource_builder/FileParser.h"
 
 // System headers
-#include <arpa/inet.h>
-#include <cerrno>
-#include <cstring>
+#if defined(_WIN32) || defined(_WIN64)
+  #include <winsock.h>
+#else //linux
+  #include <arpa/inet.h>
+#endif
 
 // Other libraries headers
 #include "utils/data_type/EnumClassUtils.h"
-#include "utils/drawing/Rectangle.h"
-#include "utils/ErrorCode.h"
+#include "utils/debug/StrError.h"
 #include "utils/Log.h"
 
 // Own components headers
+
+namespace {
+#ifdef __linux__
+constexpr auto SLASH_IDENTIFIER = '/';
+#else
+constexpr auto SLASH_IDENTIFIER = '\\';
+#endif
+}
 
 FileParser::FileParser()
     : _absoluteProjectPath("Not set"),
@@ -56,7 +65,8 @@ ErrorCode FileParser::openFile() {
 
   if (!_fileStream) {
     LOGERR("Error, could not open ifstream for fileName: %s, reason: %s",
-           _absoluteFilePath.c_str(), strerror(errno));
+           _absoluteFilePath.c_str(), strError().c_str());
+           LOGM("Prrobelmatic _absoluteFilePath: %s", _absoluteFilePath.c_str());
     return ErrorCode::FAILURE;
   }
 
@@ -124,12 +134,13 @@ bool FileParser::isSupportedExtension() {
 
 void FileParser::buildAbsoluteFilePath() {
   _absoluteFilePath = _absoluteProjectPath;
-  if (!_absoluteFilePath.empty() && _absoluteFilePath.back() != '/') {
-    _absoluteFilePath.push_back('/');
+  if (!_absoluteFilePath.empty() && _absoluteFilePath.back() != SLASH_IDENTIFIER) {
+    _absoluteFilePath.push_back(SLASH_IDENTIFIER);
   }
+
   _absoluteFilePath.append(_relativeFolderPath);
-  if (!_relativeFolderPath.empty() && _relativeFolderPath.back() != '/') {
-    _relativeFolderPath.push_back('/');
+  if (!_absoluteFilePath.empty() && _absoluteFilePath.back() != SLASH_IDENTIFIER) {
+    _absoluteFilePath.push_back(SLASH_IDENTIFIER);
   }
   _absoluteFilePath.append(_relativeFilePath);
 }
@@ -174,7 +185,7 @@ void FileParser::setFileTypeInternal() {
 bool FileParser::isValidPngFile() {
   bool success = true;
 
-  const uint8_t ONE_BYTE_SIZE = sizeof(uint64_t);
+  constexpr uint8_t ONE_BYTE_SIZE = sizeof(uint64_t);
   uint8_t* singleByte = nullptr;
   uint64_t header8B = 0;
 
@@ -187,12 +198,12 @@ bool FileParser::isValidPngFile() {
 
   if (true == success) {
     // reading PNG dimensions requires the first 24 bytes of the file
-    const int64_t PNG_HEADER_SIZE = 24;
+    constexpr int64_t PNG_HEADER_SIZE = 24;
 
     // Check if file has enough bytes for header
     if (_fileSize < PNG_HEADER_SIZE) {
       LOGERR(
-          "Warning, file: %s is too small: %ld and has incomplete png "
+          "Warning, file: %s is too small: %" PRId64" and has incomplete png "
           "header",
           _absoluteFilePath.c_str(), _fileSize);
       success = false;
@@ -221,9 +232,9 @@ bool FileParser::isValidPngFile() {
   }
 
   if (true == success) {
-    const uint8_t ONE_AND_A_HALF_BYTES_SIZE =
+    constexpr uint8_t ONE_AND_A_HALF_BYTES_SIZE =
         ONE_BYTE_SIZE + (ONE_BYTE_SIZE / 2);
-    const uint8_t TWO_BYTE_SIZE = 2 * ONE_BYTE_SIZE;
+    constexpr uint8_t TWO_BYTE_SIZE = 2 * ONE_BYTE_SIZE;
 
     // now check second 8 bytes of the header
     _fileStream.read(reinterpret_cast<char*>(&header8B), sizeof(header8B));
@@ -267,12 +278,12 @@ bool FileParser::isValidGifFile() {
 
   if (true == success) {
     // reading GIF dimensions requires the first 10 bytes of the file
-    const int64_t GIF_HEADER_SIZE = 10;
+    constexpr int64_t GIF_HEADER_SIZE = 10;
 
     // Check if file has enough bytes for header
     if (_fileSize < GIF_HEADER_SIZE) {
       LOGERR(
-          "Warning, file: %s is too small: %ld and has incomplete gif "
+          "Warning, file: %s is too small: %" PRId64" and has incomplete gif "
           "header",
           _absoluteFilePath.c_str(), _fileSize);
       success = false;
@@ -329,7 +340,7 @@ bool FileParser::isValidJpgFile() {
   if (!_fileStream)  // sanity check
   {
     LOGERR("Internal error, ifstream for %s not opened",
-           _absoluteFilePath.c_str());
+           _absoluteFilePath.c_str());  
     success = false;
   }
 
@@ -340,7 +351,7 @@ bool FileParser::isValidJpgFile() {
     // Check if file has enough bytes for header
     if (_fileSize < JPG_HEADER_SIZE) {
       LOGERR(
-          "Warning, file: %s is too small: %ld and has incomplete jpg"
+          "Warning, file: %s is too small: %" PRId64" and has incomplete jpg"
           " header",
           _absoluteFilePath.c_str(), _fileSize);
       success = false;
@@ -595,7 +606,7 @@ bool FileParser::isValidSpriteManualDescription() {
 
 ErrorCode FileParser::fillSpriteData(
     const ResourceDefines::SpriteLayout& layout,
-    std::vector<Rectangle>& outData) {
+    std::vector<struct Rectangle>& outData) {
   switch (layout) {
     case ResourceDefines::SpriteLayout::HORIZONTAL:
       setHorizontalSpriteLayout(outData);
@@ -618,7 +629,8 @@ ErrorCode FileParser::fillSpriteData(
   return ErrorCode::SUCCESS;
 }
 
-void FileParser::setHorizontalSpriteLayout(std::vector<Rectangle>& outData) {
+void FileParser::setHorizontalSpriteLayout(
+  std::vector<struct Rectangle>& outData) {
   std::vector<int32_t>& spriteDesRef = *_spriteDes;
 
   const int32_t SPRITE_COUNT = spriteDesRef[ResourceDefines::SPRITE_NUMBER_IDX];
@@ -632,7 +644,8 @@ void FileParser::setHorizontalSpriteLayout(std::vector<Rectangle>& outData) {
   }
 }
 
-void FileParser::setVerticalSpriteLayout(std::vector<Rectangle>& outData) {
+void FileParser::setVerticalSpriteLayout(
+  std::vector<struct Rectangle>& outData) {
   std::vector<int32_t>& spriteDesRef = *_spriteDes;
 
   const int32_t SPRITE_COUNT = spriteDesRef[ResourceDefines::SPRITE_NUMBER_IDX];
@@ -644,7 +657,8 @@ void FileParser::setVerticalSpriteLayout(std::vector<Rectangle>& outData) {
   }
 }
 
-void FileParser::setMixedSpriteLayout(std::vector<Rectangle>& outData) {
+void FileParser::setMixedSpriteLayout(
+  std::vector<struct Rectangle>& outData) {
   std::vector<int32_t>& spriteDesRef = *_spriteDes;
 
   const int32_t CHUNK = spriteDesRef[ResourceDefines::WIDTH_IDX] +
