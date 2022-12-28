@@ -702,17 +702,17 @@ void ResourceParser::finishParseResourceTreeLogReport(
     LOG_ON_SAME_LINE("\nRecursive search on %s ... ", _startDir.c_str());
     LOGG("[Done]");
 
-    LOG_ON_SAME_LINE("%s generation ... (%zu static files with size: %s "
-        "and %zu dynamic files with size: %s) ",
+    LOG_ON_SAME_LINE("%s generation ... (%" PRIu64" static files with size: %s "
+        "and %" PRIu64" dynamic files with size: %s) ",
         ResourceFileHeader::getResourceBinName().c_str(), _staticWidgetsCounter,
         itemsSizeStr[0].c_str(), _dynamicWidgetsCounter,
         itemsSizeStr[1].c_str());
     LOGG("[Done]");
-    LOG_ON_SAME_LINE("%s generation ... (%zu static files with size: %s) ",
+    LOG_ON_SAME_LINE("%s generation ... (%" PRIu64" static files with size: %s) ",
         ResourceFileHeader::getFontBinName().c_str(), _fontsCounter,
         itemsSizeStr[2].c_str());
     LOGG("[Done]");
-    LOG_ON_SAME_LINE("%s generation ... (%zu static files with size: %s) ",
+    LOG_ON_SAME_LINE("%s generation ... (%" PRIu64" static files with size: %s) ",
         ResourceFileHeader::getSoundBinName().c_str(),
         (_musicsCounter + _chunksCounter), itemsSizeStr[3].c_str());
     LOGG("[Done]");
