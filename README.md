@@ -1,6 +1,7 @@
 # tool
 
-**A collection of tools provided as static C++ libraries**
+## A collection of helper utility tools
+The tools is optimized for fast compilation.
 
 Currently the library provides a command line tool, which auto-generates description for assets.
 
@@ -15,13 +16,10 @@ The assets:
 - can easily be imported within a project using the library resource utils
 - The library can be found here: https://github.com/zhivkopetrov/resource_utils
 
-The tools library is optimized for fast compilation.
-
-
-**Usage**
+## Usage
 The tool:
 - relies on description file (ending in *.rsrc extension)
-Example my_awesome_game.rsrc
+Example: my_awesome_game.rsrc
 - can combine multiple *.rsrc input file into single output file
 - auto-generates C++ headers files with the names of the described assets
 - auto-generates binary files with asses description
@@ -41,9 +39,7 @@ From 'build' directory:
 ./tools/resource_builder/resource_builder dev_battle_gui
 ```
 
-
-**.rsrc file description**
-
+## .rsrc file description
 The file should follow the following syntax
 
 ```
@@ -55,8 +51,7 @@ position=<initial position on screen where 0,0 is top left on the scrreen>
 load=<load the asset on system startup or just load it's definition and let it be loaded at runtime> #on_init, on_demannd
 ```
 
-**Image example**
-
+### Image example
 ```
 tag=[TILE_SURFACE]
 type=image
@@ -66,8 +61,7 @@ position=0,0
 load=on_init
 ```
 
-**Sprite example**
-
+### Sprite example
 ```
 tag=[TILE_SURFACE]
 type=sprite
@@ -83,8 +77,7 @@ It also, automatically detects horizontal, vertical or mixed sprite layout.
 FrameSpacing (if any) is applied based on the source layout.
 The descrition population will fail if bigger dimensions that what the source image provides are given.
 
-**Sprite Manual example**
-
+### Sprite Manual example
 ```
 tag=[PARTIAL_SURFACE]
 type=sprite_manual
@@ -100,7 +93,7 @@ Note:
 Any number of description can be used on this mode.
 This is perfect for texture atlasses, where assets from different sources are combined in one big texture.
 
-**Font example**
+### Font example
 ```
 tag=[MY_AWESOME_FONT]
 type=font
@@ -111,14 +104,14 @@ description=15 #font size
 Note: 
 Fonts are always loaded on initialiazition.
 
-**Sound**
+### Sound
 
 Two sound types are supported: 'chunk' and 'music'
 The music files will be streamed, while chunks are fully loaded.
 Four sound volume levels are supported: 'low', 'medium', 'high', 'very_high'
 Sounds are always loaded on initialiazition.
 
-**Sound example**
+### Sound example
 
 ```
 tag=[MY_AWESOME_SOUNDTRACK]
@@ -132,7 +125,7 @@ path=fonts/beep.ogg
 description=chunk, medium
 ```
 
-**Usage from plain CMake or ROS(catkin) / ROS2(colcon) meta-build systems**
+## Usage from plain CMake or ROS1(catkin) / ROS2(colcon) meta-build systems
 
 - clone the repository in your file system
 - Example usage projects: 
@@ -140,12 +133,21 @@ https://github.com/zhivkopetrov/dev_battle.git
 https://github.com/zhivkopetrov/robotics_v1
 
 
-**Dependencies**
+## Dependencies
 - cmake_helpers - https://github.com/zhivkopetrov/cmake_helpers.git
-- The provided library CMakeLists.txt assumes the helpers.cmake from cmake_helpers repo have already been included
+- utils - https://github.com/zhivkopetrov/utils
 - resource_utils - https://github.com/zhivkopetrov/resource_utils
 
+## Supported Platforms
+Linux:
+  - g++ 12
+  - clang++ 14
+  - Emscripten (em++) 3.1.28
+  - Robot Operating System 2 (ROS2)
+    - Through colcon meta-build system (CMake based)
+  - Robot Operating System 1 (ROS1)
+    - Through catkin meta-build system (CMake based)
+      - Due to soon ROS1 end-of-life catkin builds are not actively supported
 
-**Platform support**
-- Tested on Unix, Windows
-- Never tested on Mac
+Windows:
+  - MSVC++ (>= 14.20) Visual Studio 2019
