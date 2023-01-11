@@ -126,7 +126,7 @@ ErrorCode ResourceParser::processAllFiles() {
   std::vector<std::string> files;
   if (ErrorCode::SUCCESS !=
       FileSystemUtils::getAllFilesInDirectoryRecursively(_startDir,
-          blackListFolders, files)) {
+          blackListFolders, FileSystemUtils::SymLinkAcceptance::DISALLOWED, files)) {
     LOGERR("getAllFilesInDirectoryRecursively() failed");
     return ErrorCode::FAILURE;
   }
