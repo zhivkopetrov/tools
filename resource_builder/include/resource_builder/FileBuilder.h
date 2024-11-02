@@ -2,6 +2,7 @@
 #define TOOLS_RESOURCE_BUILDER_INCLUDE_FILEBUILDER_H_
 
 // System headers
+#include <cstdint>
 #include <fstream>
 #include <string>
 #include <vector>
